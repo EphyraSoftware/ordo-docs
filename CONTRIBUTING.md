@@ -12,7 +12,7 @@ Thanks for considering a contribution. This repository holds the source for the 
 
 For larger changes — new sections, restructured navigation, significant rewrites — please open an issue first so the direction can be agreed before you invest the time. Small fixes can go straight to a pull request.
 
-If something on the docs site is wrong because Ordo itself behaves differently than documented, that is a bug worth filing against [`EphyraSoftware/ordo`](https://github.com/EphyraSoftware/ordo) rather than a docs change. Use your judgement; if you are unsure, file the issue here and we will route it.
+If something on the docs site is wrong because Ordo itself behaves differently than documented, file an issue here describing what you observed and what the docs led you to expect. We will route it to the right place.
 
 ## Local development
 

@@ -37,5 +37,3 @@ The sidebar is configured in `astro.config.mjs`. As subpages are added under eac
 ## Contributing
 
 Spotted a typo, a confusing page, or a missing detail? See [`CONTRIBUTING.md`](./CONTRIBUTING.md). Small fixes can go straight to a pull request; larger changes start with an issue.
-
-The Ordo project itself lives at [`EphyraSoftware/ordo`](https://github.com/EphyraSoftware/ordo).
