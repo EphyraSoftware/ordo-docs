@@ -1,0 +1,20 @@
+---
+title: Concepts
+description: The ideas Ordo is built around — tags, desired state, drift, secrets, audit, and identity.
+---
+
+These pages explain the ideas Ordo is built around. They are short by design: each page ties one piece of terminology to the behaviour you will see in the CLI and web UI.
+
+:::note
+Content under construction. Concept pages are added as the corresponding capabilities ship.
+:::
+
+## Topics
+
+- **Identity** — operator and agent keypairs, approval, and identity pinning
+- **Tags** — key-value labels on agents, and the tag selectors that target groups of machines
+- **Desired state** — declaring what a machine should look like, in YAML modules
+- **Drift** — what happens when the actual state of a machine no longer matches what was declared
+- **Modules and apply history** — packaging state, applying it, and tracking what was applied where
+- **Secrets** — how secrets reach the machines that need them without the orchestrator ever holding plaintext
+- **Audit** — the record of every significant action taken on the fleet

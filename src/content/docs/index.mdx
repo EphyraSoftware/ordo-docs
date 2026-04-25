@@ -1,0 +1,38 @@
+---
+title: Ordo
+description: Self-hosted, declarative infrastructure management for stateful machines.
+template: splash
+hero:
+  tagline: Intentional infrastructure — define state, detect drift, act deliberately.
+  actions:
+    - text: Get started
+      link: /getting-started/
+      icon: right-arrow
+    - text: View on GitHub
+      link: https://github.com/EphyraSoftware/ordo
+      icon: external
+      variant: minimal
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+## Where to next
+
+<CardGrid>
+	<Card title="Getting Started" icon="rocket">
+		Install Ordo, bootstrap an orchestrator, and connect your first agent.
+		[Start the walkthrough →](/getting-started/)
+	</Card>
+	<Card title="Concepts" icon="information">
+		Tags, desired state, drift, secrets, audit, identity — the ideas Ordo
+		is built around. [Read the concepts →](/concepts/)
+	</Card>
+	<Card title="Reference" icon="document">
+		CLI, API, state file format, and configuration reference.
+		[Browse the reference →](/reference/)
+	</Card>
+	<Card title="Architecture" icon="puzzle">
+		How the orchestrator and agents fit together.
+		[See the architecture →](/architecture/)
+	</Card>
+</CardGrid>

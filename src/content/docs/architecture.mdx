@@ -1,0 +1,15 @@
+---
+title: Architecture
+description: How the orchestrator and agents fit together.
+---
+
+Ordo runs as two binaries with distinct roles:
+
+- The **orchestrator** is the control plane. It holds desired state, schedules work, tracks execution, and surfaces audit information. One machine in a fleet runs it. It does not need to be internet-accessible and has no dependency on external hosted services.
+- The **agent** runs on each managed machine. It receives instructions from the orchestrator, applies them locally, and reports back. The agent is small and stable, with minimal configuration to deploy.
+
+Operators interact with the orchestrator through the `ordo` CLI or the orchestrator's web UI. The orchestrator stores state in an embedded database by default — there is no separate database to operate.
+
+:::note
+Content under construction. Detailed architecture pages, including network topology, identity, and storage, will be added as part of the first release.
+:::
