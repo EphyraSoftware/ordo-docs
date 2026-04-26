@@ -1,5 +1,7 @@
 # ordo-docs
 
+[![Netlify Status](https://api.netlify.com/api/v1/badges/5e999fbf-1e97-4b42-8350-cb8190af2235/deploy-status)](https://app.netlify.com/projects/ordo-docs/deploys)
+
 Source for the Ordo documentation site, served at `docs.ordo.ephyrasoftware.com`.
 
 This site is built with [Astro](https://astro.build/) and [Starlight](https://starlight.astro.build/), and deployed by [Netlify](https://www.netlify.com/) on every push to `main`.
