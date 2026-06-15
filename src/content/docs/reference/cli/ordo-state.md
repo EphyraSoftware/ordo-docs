@@ -1,6 +1,6 @@
 ---
 title: ordo-state
-description: State module authoring and analysis tool.
+description: Command-line reference for the ordo-state binary.
 ---
 
 This document contains the help content for the `ordo-state` command-line program.

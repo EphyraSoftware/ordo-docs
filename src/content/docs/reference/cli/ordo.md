@@ -1,6 +1,6 @@
 ---
 title: ordo
-description: Operator CLI for a running orchestrator.
+description: Command-line reference for the ordo binary.
 ---
 
 This document contains the help content for the `ordo` command-line program.

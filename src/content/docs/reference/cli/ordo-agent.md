@@ -1,6 +1,6 @@
 ---
 title: ordo-agent
-description: The per-machine managed agent binary.
+description: Command-line reference for the ordo-agent binary.
 ---
 
 This document contains the help content for the `ordo-agent` command-line program.
