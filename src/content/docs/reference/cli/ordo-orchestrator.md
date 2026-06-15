@@ -1,6 +1,6 @@
 ---
 title: ordo-orchestrator
-description: The orchestrator control-plane binary.
+description: Command-line reference for the ordo-orchestrator binary.
 ---
 
 This document contains the help content for the `ordo-orchestrator` command-line program.
