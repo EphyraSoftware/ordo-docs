@@ -3,13 +3,30 @@ title: Reference
 description: CLI, API, state file format, and configuration reference for Ordo.
 ---
 
-The reference covers the surfaces operators interact with directly:
+The reference covers the surfaces operators interact with directly. It is
+generated from the Ordo source (`cargo xtask gen-reference`) so it stays in
+step with each release.
 
-- **CLI** — every command exposed by the `ordo` binary, with examples
-- **API** — the orchestrator's HTTP management API
-- **State file format** — the YAML schema for declarative state modules
-- **Configuration** — every option in the orchestrator and agent configuration files, with types, defaults, and examples
+- **[CLI](/reference/cli/ordo/)** — every command exposed by the `ordo`,
+  `ordo-orchestrator`, `ordo-agent`, and `ordo-state` binaries.
+- **[Management API](/reference/api/)** — the orchestrator's HTTP management
+  API, rendered from its OpenAPI document.
+- **State file format & configuration** — machine-readable JSON Schemas are
+  published for editor autocompletion and CI validation:
+  - Module files — `https://ordo.ephyrasoftware.com/schemas/module/v1.json`
+  - Orchestrator config — `https://ordo.ephyrasoftware.com/schemas/orchestrator-config/v1.json`
+  - Agent config — `https://ordo.ephyrasoftware.com/schemas/agent-config/v1.json`
 
-:::caution
-Reference content is the last section to be written. The CLI, API, state file, and configuration surfaces are still moving while desired state and secret distribution land. Pages will appear here once the surfaces they describe are stable enough to document without immediate rework.
-:::
+## Using the schemas
+
+**VS Code** (Red Hat YAML extension) — add a modeline to the top of a module
+file:
+
+```yaml
+# yaml-language-server: $schema=https://ordo.ephyrasoftware.com/schemas/module/v1.json
+```
+
+or associate a file pattern via the `yaml.schemas` setting.
+
+**JetBrains IDEs** — map the file pattern to the schema URL under
+*Languages & Frameworks → Schemas and DTDs → JSON Schema Mappings*.

@@ -1,0 +1,3507 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Ordo Orchestrator Management API",
+    "description": "HTTP management API exposed by the Ordo orchestrator.",
+    "contact": {
+      "name": "EphyraSoftware"
+    },
+    "license": {
+      "name": "MIT OR Apache-2.0",
+      "identifier": "MIT OR Apache-2.0"
+    },
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/api/v1/agents": {
+      "get": {
+        "tags": [
+          "agents"
+        ],
+        "summary": "`GET /api/v1/agents` — list agents from the persistent store.",
+        "operationId": "handle_list_agents",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Optional status filter: `pending`, `approved`, or `rejected`.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "description": "Optional tag selection expression (e.g. `env=production role=webserver`).",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of agents",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AgentResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/agents/{node_id}": {
+      "post": {
+        "tags": [
+          "agents"
+        ],
+        "summary": "`POST /api/v1/agents/{node_id}` — change an agent's approval status.",
+        "operationId": "handle_change_agent_status",
+        "parameters": [
+          {
+            "name": "node_id",
+            "in": "path",
+            "description": "Agent node ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StatusChangeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Agent status changed"
+          },
+          "400": {
+            "description": "Invalid request body or missing name"
+          },
+          "404": {
+            "description": "Agent not found"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "agents"
+        ],
+        "summary": "`DELETE /api/v1/agents/{node_id}` — remove a rejected agent's record.",
+        "operationId": "handle_delete_agent",
+        "parameters": [
+          {
+            "name": "node_id",
+            "in": "path",
+            "description": "Agent node ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Agent record removed"
+          },
+          "404": {
+            "description": "Agent not found"
+          },
+          "409": {
+            "description": "Agent is not in a removable state"
+          }
+        }
+      }
+    },
+    "/api/v1/agents/{node_id}/apply": {
+      "post": {
+        "tags": [
+          "state"
+        ],
+        "summary": "`POST /api/v1/agents/{node_id}/apply` — apply modules to an agent.",
+        "operationId": "handle_state_apply",
+        "parameters": [
+          {
+            "name": "node_id",
+            "in": "path",
+            "description": "Agent node ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StateOperationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Apply result",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request body or module"
+          },
+          "404": {
+            "description": "Agent or module not found"
+          }
+        }
+      }
+    },
+    "/api/v1/agents/{node_id}/attributes": {
+      "get": {
+        "tags": [
+          "agents"
+        ],
+        "summary": "`GET /api/v1/agents/{node_id}/attributes` — agent attribute map.",
+        "operationId": "handle_get_agent_attributes",
+        "parameters": [
+          {
+            "name": "node_id",
+            "in": "path",
+            "description": "Agent node ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Agent attribute map",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "Agent not found"
+          }
+        }
+      }
+    },
+    "/api/v1/agents/{node_id}/drift": {
+      "get": {
+        "tags": [
+          "state"
+        ],
+        "summary": "`GET /api/v1/agents/{node_id}/drift` — list drift records for an agent.",
+        "operationId": "handle_list_drift_records",
+        "parameters": [
+          {
+            "name": "node_id",
+            "in": "path",
+            "description": "Agent node ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximum number of records to return. Default 50, max 500.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filter by status variant: `drifted`, `in_sync`, `failed`, `cancelled`.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Drift records for the agent",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "state"
+        ],
+        "summary": "`POST /api/v1/agents/{node_id}/drift` — drift check against the agent's\nlast successful apply snapshot.",
+        "operationId": "handle_state_drift",
+        "parameters": [
+          {
+            "name": "node_id",
+            "in": "path",
+            "description": "Agent node ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Drift check result",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "Agent not found"
+          }
+        }
+      }
+    },
+    "/api/v1/agents/{node_id}/drift/latest": {
+      "get": {
+        "tags": [
+          "state"
+        ],
+        "summary": "`GET /api/v1/agents/{node_id}/drift/latest` — most recent drift record.",
+        "operationId": "handle_latest_drift_record",
+        "parameters": [
+          {
+            "name": "node_id",
+            "in": "path",
+            "description": "Agent node ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Most recent drift record (or null)",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/agents/{node_id}/metrics": {
+      "get": {
+        "tags": [
+          "metrics"
+        ],
+        "summary": "`GET /api/v1/agents/{node_id}/metrics` — metrics history for an agent.",
+        "operationId": "handle_get_metrics",
+        "parameters": [
+          {
+            "name": "node_id",
+            "in": "path",
+            "description": "Agent node ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "since",
+            "in": "query",
+            "description": "Only return samples taken at or after this UNIX timestamp (seconds).\nDefaults to `now - retention_window` so the response covers the full\nretention window when omitted.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 0
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximum number of samples to return. When omitted, all samples in the\nwindow are returned.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Metrics history",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetricsHistoryResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "No samples in the requested window"
+          }
+        }
+      }
+    },
+    "/api/v1/agents/{node_id}/metrics/latest": {
+      "get": {
+        "tags": [
+          "metrics"
+        ],
+        "summary": "`GET /api/v1/agents/{node_id}/metrics/latest` — latest metrics snapshot.",
+        "operationId": "handle_get_latest_metrics",
+        "parameters": [
+          {
+            "name": "node_id",
+            "in": "path",
+            "description": "Agent node ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Latest metrics sample",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetricsSampleResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "No samples for this agent"
+          }
+        }
+      }
+    },
+    "/api/v1/agents/{node_id}/plan": {
+      "post": {
+        "tags": [
+          "state"
+        ],
+        "summary": "`POST /api/v1/agents/{node_id}/plan` — plan mode for an agent.",
+        "operationId": "handle_state_plan",
+        "parameters": [
+          {
+            "name": "node_id",
+            "in": "path",
+            "description": "Agent node ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StateOperationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Plan result",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request body or module"
+          },
+          "404": {
+            "description": "Agent or module not found"
+          }
+        }
+      }
+    },
+    "/api/v1/agents/{node_id}/state": {
+      "get": {
+        "tags": [
+          "state"
+        ],
+        "summary": "`GET /api/v1/agents/{node_id}/state` — believed machine state.",
+        "operationId": "handle_state_query",
+        "parameters": [
+          {
+            "name": "node_id",
+            "in": "path",
+            "description": "Agent node ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Believed machine state",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "Agent not found"
+          }
+        }
+      }
+    },
+    "/api/v1/agents/{node_id}/state/operations": {
+      "get": {
+        "tags": [
+          "state"
+        ],
+        "summary": "`GET /api/v1/agents/{node_id}/state/operations` — list state operations for\na single agent, most recent first.",
+        "operationId": "handle_list_state_operations_for_agent",
+        "parameters": [
+          {
+            "name": "node_id",
+            "in": "path",
+            "description": "Agent node ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximum number of operations to return in a single page.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "Zero-based offset into the most-recent-first ordering. Combine with\n`limit` to page through history.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paged state operations for the agent",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/agents/{node_id}/state/operations/{operation_id}/output": {
+      "get": {
+        "tags": [
+          "state"
+        ],
+        "summary": "`GET /api/v1/agents/{node_id}/state/operations/{operation_id}/output` —\ncaptured script output for a state operation.",
+        "description": "Per design 0015, captured stdout/stderr is stored in\n`<data-dir>/apply-outputs/<operation_id>.output.cbor`. The response `output`\nobject is keyed by `\"module_name/identity\"` — the composite key avoids\ncollisions when two modules define a script resource with the same identity.\nIf no output file exists (no scripts produced output, or the file was lost),\nthe endpoint returns an empty `output` object — the operation record itself\nremains authoritative.",
+        "operationId": "handle_state_operation_output",
+        "parameters": [
+          {
+            "name": "node_id",
+            "in": "path",
+            "description": "Agent node ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "operation_id",
+            "in": "path",
+            "description": "State operation ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Captured script output for the operation",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "Operation not found"
+          }
+        }
+      }
+    },
+    "/api/v1/agents/{node_id}/tags": {
+      "put": {
+        "tags": [
+          "agents"
+        ],
+        "summary": "`PUT /api/v1/agents/{node_id}/tags` — replace all tags on an agent.",
+        "operationId": "handle_set_agent_tags",
+        "parameters": [
+          {
+            "name": "node_id",
+            "in": "path",
+            "description": "Agent node ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetTagsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Tags replaced"
+          },
+          "400": {
+            "description": "Invalid tag key or value"
+          },
+          "404": {
+            "description": "Agent not found"
+          }
+        }
+      }
+    },
+    "/api/v1/agents/{node_id}/tags/{key}": {
+      "put": {
+        "tags": [
+          "agents"
+        ],
+        "summary": "`PUT /api/v1/agents/{node_id}/tags/{key}` — set a single tag.",
+        "operationId": "handle_set_agent_tag",
+        "parameters": [
+          {
+            "name": "node_id",
+            "in": "path",
+            "description": "Agent node ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "key",
+            "in": "path",
+            "description": "Tag key",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetTagRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Tag set"
+          },
+          "400": {
+            "description": "Invalid tag key or value"
+          },
+          "404": {
+            "description": "Agent not found"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "agents"
+        ],
+        "summary": "`DELETE /api/v1/agents/{node_id}/tags/{key}` — remove a single tag.",
+        "operationId": "handle_remove_agent_tag",
+        "parameters": [
+          {
+            "name": "node_id",
+            "in": "path",
+            "description": "Agent node ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "key",
+            "in": "path",
+            "description": "Tag key",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Tag removed"
+          },
+          "404": {
+            "description": "Agent or tag not found"
+          }
+        }
+      }
+    },
+    "/api/v1/assignments": {
+      "get": {
+        "tags": [
+          "assignments"
+        ],
+        "summary": "`GET /api/v1/assignments` — list all assignments.",
+        "operationId": "handle_list_assignments",
+        "responses": {
+          "200": {
+            "description": "List of assignments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {}
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "assignments"
+        ],
+        "summary": "`POST /api/v1/assignments` — create an assignment.",
+        "operationId": "handle_create_assignment",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAssignmentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Assignment created",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request body"
+          },
+          "409": {
+            "description": "Assignment already exists"
+          }
+        }
+      }
+    },
+    "/api/v1/assignments/{name}": {
+      "get": {
+        "tags": [
+          "assignments"
+        ],
+        "summary": "`GET /api/v1/assignments/{name}` — get a single assignment.",
+        "operationId": "handle_get_assignment",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "description": "Assignment name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The assignment",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "Assignment not found"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "assignments"
+        ],
+        "summary": "`DELETE /api/v1/assignments/{name}` — delete an assignment.",
+        "operationId": "handle_delete_assignment",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "description": "Assignment name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Assignment deleted"
+          },
+          "404": {
+            "description": "Assignment not found"
+          }
+        }
+      }
+    },
+    "/api/v1/assignments/{name}/apply": {
+      "post": {
+        "tags": [
+          "assignments"
+        ],
+        "summary": "`POST /api/v1/assignments/{name}/apply` — apply an assignment to every\nagent its selector currently matches.",
+        "operationId": "handle_apply_assignment",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "description": "Assignment name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Per-agent apply outcomes",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "Assignment not found"
+          }
+        }
+      }
+    },
+    "/api/v1/assignments/{name}/plan": {
+      "post": {
+        "tags": [
+          "assignments"
+        ],
+        "summary": "`POST /api/v1/assignments/{name}/plan` — plan an assignment against every\nagent its selector currently matches.",
+        "operationId": "handle_plan_assignment",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "description": "Assignment name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Per-agent plan outcomes",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "Assignment not found"
+          }
+        }
+      }
+    },
+    "/api/v1/audit": {
+      "get": {
+        "tags": [
+          "audit"
+        ],
+        "summary": "`GET /api/v1/audit` — query the audit log. Available to any\nauthenticated operator.",
+        "operationId": "handle_query_audit",
+        "parameters": [
+          {
+            "name": "agent",
+            "in": "query",
+            "description": "Filter by agent node ID or operator-assigned name.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "operator",
+            "in": "query",
+            "description": "Filter by operator ID or username.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "event_type",
+            "in": "query",
+            "description": "Filter by exact dotted event type.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "description": "Filter by event type prefix (e.g. `agent`).",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "after",
+            "in": "query",
+            "description": "Earliest timestamp to include, RFC 3339 / ISO 8601.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "before",
+            "in": "query",
+            "description": "Latest timestamp to include (exclusive), RFC 3339 / ISO 8601.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "description": "Pagination cursor (a ULID — the last event ID from the previous page).",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximum events per page (default 50, max 500).",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Audit log page",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditPageResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid filter or cursor"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "audit"
+        ],
+        "summary": "`DELETE /api/v1/audit?before=<iso8601>` — manually prune old audit\nevents. Admin only.",
+        "operationId": "handle_prune_audit",
+        "parameters": [
+          {
+            "name": "before",
+            "in": "query",
+            "description": "Cutoff timestamp (RFC 3339 / ISO 8601); events strictly before\nthis point are deleted.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Number of pruned events",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditPruneResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid cutoff timestamp"
+          },
+          "403": {
+            "description": "Admin role required"
+          }
+        }
+      }
+    },
+    "/api/v1/audit/retention": {
+      "get": {
+        "tags": [
+          "audit"
+        ],
+        "summary": "`GET /api/v1/audit/retention` — read the current audit retention\nsetting. Available to any authenticated operator.",
+        "operationId": "handle_get_audit_retention",
+        "responses": {
+          "200": {
+            "description": "Current audit retention setting",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditRetentionResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "audit"
+        ],
+        "summary": "`PUT /api/v1/audit/retention` — update the audit retention setting.\nAdmin only.",
+        "operationId": "handle_set_audit_retention",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AuditRetentionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Updated audit retention setting",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditRetentionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid retention value"
+          },
+          "403": {
+            "description": "Admin role required"
+          }
+        }
+      }
+    },
+    "/api/v1/auth/challenge": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "`POST /api/v1/auth/challenge` — issue a nonce for the operator to sign.",
+        "operationId": "handle_auth_challenge",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AuthChallengeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Challenge nonce issued",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthChallengeResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid public key"
+          },
+          "403": {
+            "description": "Unknown or inactive operator"
+          }
+        }
+      }
+    },
+    "/api/v1/auth/verify": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "`POST /api/v1/auth/verify` — verify the signed nonce and issue a session\ntoken.",
+        "operationId": "handle_auth_verify",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AuthVerifyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Session token issued",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthVerifyResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid public key or signature"
+          },
+          "401": {
+            "description": "Signature verification failed"
+          }
+        }
+      }
+    },
+    "/api/v1/channels": {
+      "get": {
+        "tags": [
+          "channels"
+        ],
+        "summary": "`GET /api/v1/channels` — list notification channels.",
+        "operationId": "handle_list_channels",
+        "responses": {
+          "200": {
+            "description": "List of notification channels",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ChannelResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "channels"
+        ],
+        "summary": "`POST /api/v1/channels` — create a notification channel (Admin only).",
+        "operationId": "handle_create_channel",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateChannelRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Channel created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChannelResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request body or channel type"
+          },
+          "403": {
+            "description": "Admin role required"
+          }
+        }
+      }
+    },
+    "/api/v1/channels/{id}": {
+      "get": {
+        "tags": [
+          "channels"
+        ],
+        "summary": "`GET /api/v1/channels/{id}` — get a single notification channel.",
+        "operationId": "handle_get_channel",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Channel ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Notification channel",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChannelResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Channel not found"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "channels"
+        ],
+        "summary": "`PUT /api/v1/channels/{id}` — update a notification channel (Admin only).",
+        "operationId": "handle_update_channel",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Channel ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateChannelRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Channel updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChannelResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request body"
+          },
+          "403": {
+            "description": "Admin role required"
+          },
+          "404": {
+            "description": "Channel not found"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "channels"
+        ],
+        "summary": "`DELETE /api/v1/channels/{id}` — delete a notification channel (Admin only).",
+        "operationId": "handle_delete_channel",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Channel ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Channel deleted"
+          },
+          "403": {
+            "description": "Admin role required"
+          },
+          "404": {
+            "description": "Channel not found"
+          }
+        }
+      }
+    },
+    "/api/v1/channels/{id}/test": {
+      "post": {
+        "tags": [
+          "channels"
+        ],
+        "summary": "`POST /api/v1/channels/{id}/test` — send a test notification through a\nchannel (Admin only).",
+        "operationId": "handle_test_channel",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Channel ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Test delivery result",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "403": {
+            "description": "Admin role required"
+          },
+          "404": {
+            "description": "Channel not found"
+          },
+          "502": {
+            "description": "Test delivery failed"
+          }
+        }
+      }
+    },
+    "/api/v1/discover": {
+      "post": {
+        "tags": [
+          "status"
+        ],
+        "summary": "`POST /api/v1/discover` — trigger a UDP discovery broadcast.",
+        "operationId": "handle_discover",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DiscoverRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Discovery broadcast sent"
+          },
+          "500": {
+            "description": "Failed to send discovery broadcast"
+          }
+        }
+      }
+    },
+    "/api/v1/drift/{drift_id}": {
+      "get": {
+        "tags": [
+          "state"
+        ],
+        "summary": "`GET /api/v1/drift/{drift_id}` — fetch a single drift record by ID.",
+        "operationId": "handle_get_drift_record",
+        "parameters": [
+          {
+            "name": "drift_id",
+            "in": "path",
+            "description": "Drift record ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Drift record",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "Drift record not found"
+          }
+        }
+      }
+    },
+    "/api/v1/maintenance-windows": {
+      "get": {
+        "tags": [
+          "maintenance"
+        ],
+        "summary": "`GET /api/v1/maintenance-windows` — list all maintenance windows.",
+        "operationId": "handle_list_maintenance_windows",
+        "responses": {
+          "200": {
+            "description": "List of maintenance windows",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MaintenanceWindowResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "maintenance"
+        ],
+        "summary": "`POST /api/v1/maintenance-windows` — create a maintenance window (Admin\nonly).",
+        "operationId": "handle_create_maintenance_window",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMaintenanceWindowRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Maintenance window created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaintenanceWindowResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request body"
+          },
+          "403": {
+            "description": "Admin role required"
+          }
+        }
+      }
+    },
+    "/api/v1/maintenance-windows/{id}": {
+      "get": {
+        "tags": [
+          "maintenance"
+        ],
+        "summary": "`GET /api/v1/maintenance-windows/{id}` — get a single maintenance window.",
+        "operationId": "handle_get_maintenance_window",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Maintenance window ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Maintenance window",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaintenanceWindowResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Maintenance window not found"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "maintenance"
+        ],
+        "summary": "`PUT /api/v1/maintenance-windows/{id}` — update a maintenance window\n(Admin only). Typically used to end a window early.",
+        "operationId": "handle_update_maintenance_window",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Maintenance window ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMaintenanceWindowRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Maintenance window updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaintenanceWindowResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request body"
+          },
+          "403": {
+            "description": "Admin role required"
+          },
+          "404": {
+            "description": "Maintenance window not found"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "maintenance"
+        ],
+        "summary": "`DELETE /api/v1/maintenance-windows/{id}` — delete a maintenance window\n(Admin only).",
+        "operationId": "handle_delete_maintenance_window",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Maintenance window ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Maintenance window deleted"
+          },
+          "403": {
+            "description": "Admin role required"
+          },
+          "404": {
+            "description": "Maintenance window not found"
+          }
+        }
+      }
+    },
+    "/api/v1/modules": {
+      "get": {
+        "tags": [
+          "modules"
+        ],
+        "summary": "`GET /api/v1/modules` — list all modules.",
+        "operationId": "handle_list_modules",
+        "responses": {
+          "200": {
+            "description": "List of modules",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ModuleResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "modules"
+        ],
+        "summary": "`POST /api/v1/modules` — upload a module.",
+        "operationId": "handle_upload_module",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UploadModuleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Module uploaded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModuleResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid module content"
+          }
+        }
+      }
+    },
+    "/api/v1/modules/{name}": {
+      "get": {
+        "tags": [
+          "modules"
+        ],
+        "summary": "`GET /api/v1/modules/{name}` — get a module's details and content.",
+        "operationId": "handle_get_module",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "description": "Module name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Module details and content",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "Module not found"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "modules"
+        ],
+        "summary": "`DELETE /api/v1/modules/{name}` — delete a module.",
+        "operationId": "handle_delete_module",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "description": "Module name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Module deleted"
+          },
+          "404": {
+            "description": "Module not found"
+          }
+        }
+      }
+    },
+    "/api/v1/notifications": {
+      "get": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "`GET /api/v1/notifications` — list notifications for the requesting\noperator.",
+        "operationId": "handle_list_notifications",
+        "parameters": [
+          {
+            "name": "unread",
+            "in": "query",
+            "description": "When `true`, only return notifications the requesting operator has\nnot yet marked as read.",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximum number of notifications to return.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of notifications",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationsListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/notifications/read-all": {
+      "post": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "`POST /api/v1/notifications/read-all` — mark all notifications as read\nfor the requesting operator.",
+        "operationId": "handle_mark_all_notifications_read",
+        "responses": {
+          "204": {
+            "description": "All notifications marked read"
+          }
+        }
+      }
+    },
+    "/api/v1/notifications/{id}/read": {
+      "post": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "`POST /api/v1/notifications/{id}/read` — mark a single notification as\nread for the requesting operator.",
+        "operationId": "handle_mark_notification_read",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Notification ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Notification marked read"
+          },
+          "404": {
+            "description": "Notification not found"
+          }
+        }
+      }
+    },
+    "/api/v1/operators": {
+      "get": {
+        "tags": [
+          "operators"
+        ],
+        "summary": "`GET /api/v1/operators` — list operators.",
+        "operationId": "handle_list_operators",
+        "parameters": [
+          {
+            "name": "include_removed",
+            "in": "query",
+            "description": "Include soft-deleted operators in the response.",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of operators",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OperatorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "operators"
+        ],
+        "summary": "`POST /api/v1/operators` — add a new operator (Admin only).",
+        "operationId": "handle_add_operator",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddOperatorRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Operator created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OperatorResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid public key or username"
+          },
+          "403": {
+            "description": "Admin role required"
+          },
+          "409": {
+            "description": "Operator or username already exists"
+          }
+        }
+      }
+    },
+    "/api/v1/operators/{operator_id}": {
+      "get": {
+        "tags": [
+          "operators"
+        ],
+        "summary": "`GET /api/v1/operators/{operator_id}` — get a single operator.",
+        "operationId": "handle_get_operator",
+        "parameters": [
+          {
+            "name": "operator_id",
+            "in": "path",
+            "description": "Operator ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operator",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OperatorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Operator not found"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "operators"
+        ],
+        "summary": "`DELETE /api/v1/operators/{operator_id}` — remove an operator (Admin only).",
+        "operationId": "handle_remove_operator",
+        "parameters": [
+          {
+            "name": "operator_id",
+            "in": "path",
+            "description": "Operator ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Operator removed"
+          },
+          "403": {
+            "description": "Admin role required"
+          },
+          "404": {
+            "description": "Operator not found"
+          }
+        }
+      }
+    },
+    "/api/v1/secrets": {
+      "get": {
+        "tags": [
+          "secrets"
+        ],
+        "summary": "`GET /api/v1/secrets` — list all secrets (metadata only).",
+        "operationId": "handle_list_secrets",
+        "responses": {
+          "200": {
+            "description": "List of secrets (metadata only)",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "secrets"
+        ],
+        "summary": "`POST /api/v1/secrets` — create a new secret.",
+        "operationId": "handle_create_secret",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSecretRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Secret created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SecretResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request body or restriction"
+          },
+          "409": {
+            "description": "Secret already exists"
+          }
+        }
+      }
+    },
+    "/api/v1/secrets/{name}": {
+      "get": {
+        "tags": [
+          "secrets"
+        ],
+        "summary": "`GET /api/v1/secrets/{name}` — get a single secret's metadata.",
+        "operationId": "handle_get_secret",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "description": "Secret name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Secret metadata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SecretResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Secret not found"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "secrets"
+        ],
+        "summary": "`PUT /api/v1/secrets/{name}` — update a secret.",
+        "operationId": "handle_update_secret",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "description": "Secret name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSecretRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Secret updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SecretResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request body"
+          },
+          "404": {
+            "description": "Secret not found"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "secrets"
+        ],
+        "summary": "`DELETE /api/v1/secrets/{name}` — delete a secret.",
+        "operationId": "handle_delete_secret",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "description": "Secret name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Secret deleted"
+          },
+          "404": {
+            "description": "Secret not found"
+          }
+        }
+      }
+    },
+    "/api/v1/state/operations": {
+      "get": {
+        "tags": [
+          "state"
+        ],
+        "summary": "`GET /api/v1/state/operations` — list state operations across all agents,\nmost recent first.",
+        "operationId": "handle_list_state_operations_all",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximum number of operations to return in a single page.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "Zero-based offset into the most-recent-first ordering. Combine with\n`limit` to page through history.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paged state operations across all agents",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/state/operations/{operation_id}": {
+      "get": {
+        "tags": [
+          "state"
+        ],
+        "summary": "`GET /api/v1/state/operations/{operation_id}` — single operation detail\nincluding per-resource results.",
+        "operationId": "handle_get_state_operation",
+        "parameters": [
+          {
+            "name": "operation_id",
+            "in": "path",
+            "description": "State operation ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "State operation detail",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "State operation not found"
+          }
+        }
+      }
+    },
+    "/api/v1/status": {
+      "get": {
+        "tags": [
+          "status"
+        ],
+        "summary": "`GET /api/v1/status` — return protocol version and health status.",
+        "operationId": "handle_status",
+        "responses": {
+          "200": {
+            "description": "Orchestrator status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tags": {
+      "get": {
+        "tags": [
+          "agents"
+        ],
+        "summary": "`GET /api/v1/tags` — list all distinct tag keys and values.",
+        "operationId": "handle_list_tags",
+        "responses": {
+          "200": {
+            "description": "All tag keys and values",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TagsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/terminal": {
+      "get": {
+        "tags": [
+          "terminal"
+        ],
+        "summary": "`GET /api/v1/terminal` — list terminal sessions.",
+        "operationId": "handle_list_terminal_sessions",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Optional status filter.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of terminal sessions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TerminalSessionResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/terminal/session/{session_id}": {
+      "get": {
+        "tags": [
+          "terminal"
+        ],
+        "summary": "`GET /api/v1/terminal/session/{session_id}` — get session metadata.",
+        "operationId": "handle_get_terminal_session",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "description": "Terminal session ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Terminal session detail",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TerminalSessionDetailResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Session not found"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "terminal"
+        ],
+        "summary": "`DELETE /api/v1/terminal/session/{session_id}` — close a terminal session.",
+        "operationId": "handle_close_terminal_session",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "description": "Terminal session ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Session closed"
+          },
+          "404": {
+            "description": "Session not found"
+          }
+        }
+      }
+    },
+    "/api/v1/terminal/session/{session_id}/transcript": {
+      "get": {
+        "tags": [
+          "terminal"
+        ],
+        "summary": "`GET /api/v1/terminal/session/{session_id}/transcript` — download transcript.",
+        "operationId": "handle_get_transcript",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "description": "Terminal session ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Transcript content (application/octet-stream)"
+          },
+          "404": {
+            "description": "Session or transcript not found"
+          }
+        }
+      }
+    },
+    "/api/v1/terminal/{node_id}": {
+      "post": {
+        "tags": [
+          "terminal"
+        ],
+        "summary": "`POST /api/v1/terminal/{node_id}` — open a terminal session.",
+        "operationId": "handle_open_terminal",
+        "parameters": [
+          {
+            "name": "node_id",
+            "in": "path",
+            "description": "Agent node ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "cols",
+            "in": "query",
+            "description": "Terminal width in columns.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0
+            }
+          },
+          {
+            "name": "rows",
+            "in": "query",
+            "description": "Terminal height in rows.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0
+            }
+          },
+          {
+            "name": "shell",
+            "in": "query",
+            "description": "Shell binary path (optional).",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Terminal session opened",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenTerminalResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Agent is not connected"
+          },
+          "409": {
+            "description": "Agent does not have remote terminal enabled"
+          },
+          "504": {
+            "description": "Timed out waiting for the agent"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AddOperatorRequest": {
+        "type": "object",
+        "description": "Request body for `POST /api/v1/operators`.",
+        "required": [
+          "public_key",
+          "username"
+        ],
+        "properties": {
+          "public_key": {
+            "type": "string",
+            "description": "Hex-encoded Ed25519 public key of the new operator."
+          },
+          "role": {
+            "type": "string",
+            "description": "Role to assign. Defaults to `operator` if omitted."
+          },
+          "username": {
+            "type": "string",
+            "description": "Required, immutable, human-readable username for the operator. Must\nsatisfy [`ordo_store::validate_identifier`]."
+          }
+        }
+      },
+      "AgentResponse": {
+        "type": "object",
+        "description": "A single agent in the `GET /api/v1/agents` response.",
+        "required": [
+          "node_id",
+          "initial_hostname",
+          "initial_ip",
+          "agent_version",
+          "status",
+          "connected",
+          "connected_at",
+          "updated_at",
+          "tags",
+          "attributes"
+        ],
+        "properties": {
+          "agent_version": {
+            "type": "string"
+          },
+          "attributes": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "propertyNames": {
+              "type": "string"
+            }
+          },
+          "connected": {
+            "type": "boolean"
+          },
+          "connected_at": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "initial_hostname": {
+            "type": "string"
+          },
+          "initial_ip": {
+            "type": "string"
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Operator-assigned, immutable name. `null` while the agent is pending."
+          },
+          "node_id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "tags": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "propertyNames": {
+              "type": "string"
+            }
+          },
+          "updated_at": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          }
+        }
+      },
+      "ApiApprovalAction": {
+        "type": "string",
+        "description": "An operator action to approve or reject an agent.",
+        "enum": [
+          "approved",
+          "rejected"
+        ]
+      },
+      "AuditEventResponse": {
+        "type": "object",
+        "description": "One event in the response body of `GET /api/v1/audit`.",
+        "required": [
+          "id",
+          "event_type",
+          "severity",
+          "timestamp",
+          "actor",
+          "target",
+          "summary",
+          "metadata"
+        ],
+        "properties": {
+          "actor": {
+            "$ref": "#/components/schemas/AuditPrincipal"
+          },
+          "event_type": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "metadata": {
+            "type": "object"
+          },
+          "severity": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "target": {
+            "$ref": "#/components/schemas/AuditPrincipal"
+          },
+          "timestamp": {
+            "type": "string"
+          }
+        }
+      },
+      "AuditPageResponse": {
+        "type": "object",
+        "description": "Response body for `GET /api/v1/audit`.",
+        "required": [
+          "events",
+          "has_more"
+        ],
+        "properties": {
+          "events": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AuditEventResponse"
+            }
+          },
+          "has_more": {
+            "type": "boolean"
+          },
+          "next_cursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "AuditPrincipal": {
+        "type": "object",
+        "description": "Actor or target representation in audit responses.",
+        "required": [
+          "type",
+          "id",
+          "name"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        }
+      },
+      "AuditPruneResponse": {
+        "type": "object",
+        "description": "Response body for `DELETE /api/v1/audit`.",
+        "required": [
+          "deleted"
+        ],
+        "properties": {
+          "deleted": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "AuditRetentionRequest": {
+        "type": "object",
+        "description": "Request body for `PUT /api/v1/audit/retention`.\n\n`retention_days = None` clears the override and falls back to the\nconfiguration-file default. `Some(0)` is not allowed — use `None` to\ndisable pruning.",
+        "properties": {
+          "retention_days": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "minimum": 0
+          }
+        }
+      },
+      "AuditRetentionResponse": {
+        "type": "object",
+        "description": "Response body for `GET /api/v1/audit/retention`.",
+        "properties": {
+          "retention_days": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "minimum": 0
+          }
+        }
+      },
+      "AuthChallengeRequest": {
+        "type": "object",
+        "description": "Request body for `POST /api/v1/auth/challenge`.",
+        "required": [
+          "public_key"
+        ],
+        "properties": {
+          "public_key": {
+            "type": "string",
+            "description": "Hex-encoded Ed25519 public key of the operator."
+          }
+        }
+      },
+      "AuthChallengeResponse": {
+        "type": "object",
+        "description": "Response body for `POST /api/v1/auth/challenge`.",
+        "required": [
+          "nonce"
+        ],
+        "properties": {
+          "nonce": {
+            "type": "string",
+            "description": "Hex-encoded 32-byte nonce to be signed by the operator."
+          }
+        }
+      },
+      "AuthVerifyRequest": {
+        "type": "object",
+        "description": "Request body for `POST /api/v1/auth/verify`.",
+        "required": [
+          "public_key",
+          "signature"
+        ],
+        "properties": {
+          "public_key": {
+            "type": "string",
+            "description": "Hex-encoded Ed25519 public key of the operator."
+          },
+          "signature": {
+            "type": "string",
+            "description": "Hex-encoded Ed25519 signature of the challenge nonce."
+          }
+        }
+      },
+      "AuthVerifyResponse": {
+        "type": "object",
+        "description": "Response body for `POST /api/v1/auth/verify`.",
+        "required": [
+          "token",
+          "expires_at"
+        ],
+        "properties": {
+          "expires_at": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Unix timestamp when the token expires.",
+            "minimum": 0
+          },
+          "token": {
+            "type": "string",
+            "description": "Opaque session token."
+          }
+        }
+      },
+      "ChannelResponse": {
+        "type": "object",
+        "description": "Response body for a single notification channel.",
+        "required": [
+          "id",
+          "name",
+          "channel_type",
+          "config",
+          "created_at",
+          "created_by"
+        ],
+        "properties": {
+          "channel_type": {
+            "type": "string"
+          },
+          "config": {},
+          "created_at": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "created_by": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateAssignmentRequest": {
+        "type": "object",
+        "description": "Request body for `POST /api/v1/assignments`.",
+        "required": [
+          "name",
+          "modules",
+          "selector"
+        ],
+        "properties": {
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "modules": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "name": {
+            "type": "string"
+          },
+          "selector": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateChannelRequest": {
+        "type": "object",
+        "description": "Request body for `POST /api/v1/channels`.",
+        "required": [
+          "name",
+          "channel_type",
+          "config"
+        ],
+        "properties": {
+          "channel_type": {
+            "type": "string",
+            "description": "Channel type: `webhook`, `discord`, `slack`, or `ntfy`."
+          },
+          "config": {
+            "description": "Type-specific configuration as a JSON object."
+          },
+          "name": {
+            "type": "string",
+            "description": "Human-readable label for the channel."
+          }
+        }
+      },
+      "CreateMaintenanceWindowRequest": {
+        "type": "object",
+        "description": "Request body for `POST /api/v1/maintenance-windows`.",
+        "required": [
+          "reason",
+          "starts_at",
+          "ends_at"
+        ],
+        "properties": {
+          "ends_at": {
+            "type": "integer",
+            "format": "int64",
+            "description": "UTC end time, Unix timestamp in seconds.",
+            "minimum": 0
+          },
+          "reason": {
+            "type": "string",
+            "description": "Operator-provided reason for the window."
+          },
+          "starts_at": {
+            "type": "integer",
+            "format": "int64",
+            "description": "UTC start time, Unix timestamp in seconds.",
+            "minimum": 0
+          }
+        }
+      },
+      "CreateSecretRequest": {
+        "type": "object",
+        "description": "Request body for `POST /api/v1/secrets`.",
+        "required": [
+          "name",
+          "value"
+        ],
+        "properties": {
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Human-readable description."
+          },
+          "expires_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional expiry date (RFC 3339 timestamp)."
+          },
+          "name": {
+            "type": "string",
+            "description": "Secret name."
+          },
+          "restriction": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/SecretRestrictionBody",
+                "description": "Access restriction."
+              }
+            ]
+          },
+          "value": {
+            "type": "string",
+            "description": "Secret value (plaintext)."
+          }
+        }
+      },
+      "DiscoverRequest": {
+        "type": "object",
+        "description": "Request body for `POST /api/v1/discover`.",
+        "properties": {
+          "target": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional unicast target address (`host:port`)."
+          }
+        }
+      },
+      "MaintenanceWindowResponse": {
+        "type": "object",
+        "description": "Response body for a single maintenance window.",
+        "required": [
+          "id",
+          "reason",
+          "starts_at",
+          "ends_at",
+          "created_by"
+        ],
+        "properties": {
+          "created_by": {
+            "type": "string"
+          },
+          "ends_at": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "id": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "starts_at": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          }
+        }
+      },
+      "MetricsHistoryResponse": {
+        "type": "object",
+        "description": "Response body for `GET /api/v1/agents/{node_id}/metrics`.",
+        "required": [
+          "node_id",
+          "samples"
+        ],
+        "properties": {
+          "node_id": {
+            "type": "string",
+            "description": "Node ID of the agent these samples belong to."
+          },
+          "samples": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MetricsSampleResponse"
+            },
+            "description": "Samples within the requested window, ordered by `collected_at`\nascending."
+          }
+        }
+      },
+      "MetricsSampleResponse": {
+        "type": "object",
+        "description": "A single metrics sample in an API response.\n\nMirrors the wire format `MetricsReport` and the stored `MetricsSnapshot`.\nAll metric fields are nullable: a `null` value means the agent could not\ncollect that metric (the OS does not expose it, the agent has metrics\ndisabled, or the metric is not yet implemented for this platform).",
+        "required": [
+          "collected_at"
+        ],
+        "properties": {
+          "collected_at": {
+            "type": "integer",
+            "format": "int64",
+            "description": "UNIX timestamp (seconds) when the agent took this sample.",
+            "minimum": 0
+          },
+          "cpu_usage": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "float",
+            "description": "System-wide CPU usage at sample time, as a percentage (0–100)."
+          },
+          "disk_total": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Total disk space across all mounted non-virtual filesystems, in bytes.",
+            "minimum": 0
+          },
+          "disk_used": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Used disk space across all mounted non-virtual filesystems, in bytes.",
+            "minimum": 0
+          },
+          "memory_total": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Total physical memory in bytes.",
+            "minimum": 0
+          },
+          "memory_used": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Used physical memory in bytes.",
+            "minimum": 0
+          },
+          "uptime": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Time since last boot in seconds.",
+            "minimum": 0
+          }
+        }
+      },
+      "ModuleResponse": {
+        "type": "object",
+        "description": "Response body for module endpoints.",
+        "required": [
+          "name",
+          "uploaded_at",
+          "uploaded_by"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "uploaded_at": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "uploaded_by": {
+            "type": "string"
+          }
+        }
+      },
+      "NotificationResponse": {
+        "type": "object",
+        "description": "A single notification in the API response.",
+        "required": [
+          "id",
+          "event_id",
+          "event_type",
+          "severity",
+          "summary",
+          "timestamp_ms"
+        ],
+        "properties": {
+          "event_id": {
+            "type": "string"
+          },
+          "event_type": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "severity": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "timestamp_ms": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          }
+        }
+      },
+      "NotificationsListResponse": {
+        "type": "object",
+        "description": "Response body for `GET /api/v1/notifications`.",
+        "required": [
+          "notifications",
+          "unread_count"
+        ],
+        "properties": {
+          "notifications": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationResponse"
+            }
+          },
+          "unread_count": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          }
+        }
+      },
+      "OpenTerminalResponse": {
+        "type": "object",
+        "description": "Response body for `POST /api/v1/terminal/{node_id}`.",
+        "required": [
+          "session_id",
+          "ws_url"
+        ],
+        "properties": {
+          "session_id": {
+            "type": "string"
+          },
+          "ws_url": {
+            "type": "string"
+          }
+        }
+      },
+      "OperatorResponse": {
+        "type": "object",
+        "description": "Response body for a single operator.",
+        "required": [
+          "operator_id",
+          "username",
+          "role",
+          "added_at",
+          "added_by",
+          "bootstrap"
+        ],
+        "properties": {
+          "added_at": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "added_by": {
+            "type": "string"
+          },
+          "bootstrap": {
+            "type": "boolean"
+          },
+          "operator_id": {
+            "type": "string"
+          },
+          "removed_at": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "minimum": 0
+          },
+          "removed_by": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "role": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          }
+        }
+      },
+      "SecretResponse": {
+        "type": "object",
+        "description": "Response body for a single secret (never includes value).",
+        "required": [
+          "name",
+          "created_at",
+          "created_by",
+          "updated_at",
+          "updated_by"
+        ],
+        "properties": {
+          "created_at": {
+            "type": "string"
+          },
+          "created_by": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "expires_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "restriction": {},
+          "updated_at": {
+            "type": "string"
+          },
+          "updated_by": {
+            "type": "string"
+          }
+        }
+      },
+      "SecretRestrictionBody": {
+        "type": "object",
+        "description": "Restriction as received over the API.",
+        "properties": {
+          "node_ids": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "List of agent node IDs."
+          },
+          "tags": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Tag selection expression."
+          }
+        }
+      },
+      "SetTagRequest": {
+        "type": "object",
+        "description": "Request body for `PUT /api/v1/agents/{node_id}/tags/{key}`.",
+        "required": [
+          "value"
+        ],
+        "properties": {
+          "value": {
+            "type": "string"
+          }
+        }
+      },
+      "SetTagsRequest": {
+        "type": "object",
+        "description": "Request body for `PUT /api/v1/agents/{node_id}/tags`.",
+        "required": [
+          "tags"
+        ],
+        "properties": {
+          "tags": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "propertyNames": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "StateOperationRequest": {
+        "type": "object",
+        "description": "Request body for `POST /api/v1/agents/{node_id}/apply` and `plan`.",
+        "required": [
+          "modules"
+        ],
+        "properties": {
+          "modules": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Module names to apply/plan."
+          }
+        }
+      },
+      "StatusChangeRequest": {
+        "type": "object",
+        "description": "Request body for `POST /api/v1/agents/{node_id}`.",
+        "required": [
+          "status"
+        ],
+        "properties": {
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Required when `status` is `approved`: the immutable, operator-chosen\nhuman-readable name to assign to the agent. Ignored otherwise."
+          },
+          "status": {
+            "$ref": "#/components/schemas/ApiApprovalAction",
+            "description": "The approval action to take."
+          }
+        }
+      },
+      "StatusResponse": {
+        "type": "object",
+        "description": "Response body for `GET /api/v1/status`.",
+        "required": [
+          "protocol_version",
+          "status",
+          "public_key"
+        ],
+        "properties": {
+          "protocol_version": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "public_key": {
+            "type": "string",
+            "description": "Hex-encoded Ed25519 public key of this orchestrator."
+          },
+          "status": {
+            "type": "string"
+          }
+        }
+      },
+      "TagsResponse": {
+        "type": "object",
+        "description": "Response body for `GET /api/v1/tags`.",
+        "required": [
+          "tags"
+        ],
+        "properties": {
+          "tags": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "propertyNames": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "TerminalSessionDetailResponse": {
+        "type": "object",
+        "description": "Response body for `GET /api/v1/terminal/session/{session_id}`.",
+        "required": [
+          "session_id",
+          "node_id",
+          "status",
+          "opened_at"
+        ],
+        "properties": {
+          "closed_at": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "minimum": 0
+          },
+          "node_id": {
+            "type": "string"
+          },
+          "opened_at": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "session_id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "transcript_path": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "TerminalSessionResponse": {
+        "type": "object",
+        "description": "A single session in the `GET /api/v1/terminal` response.",
+        "required": [
+          "session_id",
+          "node_id",
+          "status",
+          "opened_at"
+        ],
+        "properties": {
+          "closed_at": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "minimum": 0
+          },
+          "node_id": {
+            "type": "string"
+          },
+          "opened_at": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "session_id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        }
+      },
+      "UpdateChannelRequest": {
+        "type": "object",
+        "description": "Request body for `PUT /api/v1/channels/{id}`.",
+        "properties": {
+          "config": {
+            "description": "New config (optional)."
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "New name (optional)."
+          }
+        }
+      },
+      "UpdateMaintenanceWindowRequest": {
+        "type": "object",
+        "description": "Request body for `PUT /api/v1/maintenance-windows/{id}`.",
+        "required": [
+          "ends_at"
+        ],
+        "properties": {
+          "ends_at": {
+            "type": "integer",
+            "format": "int64",
+            "description": "New end time (for ending early), Unix timestamp in seconds.",
+            "minimum": 0
+          }
+        }
+      },
+      "UpdateSecretRequest": {
+        "type": "object",
+        "description": "Request body for `PUT /api/v1/secrets/{name}`.",
+        "properties": {
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "New description (optional)."
+          },
+          "expires_at": {
+            "description": "New expiry date. Absent = don't change; `null` = clear; string = set.\nUses `Value` instead of `Option<Option<String>>` to satisfy clippy's\n`option_option` lint while still distinguishing absent from null."
+          },
+          "value": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "New value (optional)."
+          }
+        }
+      },
+      "UploadModuleRequest": {
+        "type": "object",
+        "description": "Request body for `POST /api/v1/modules`.",
+        "required": [
+          "name",
+          "content"
+        ],
+        "properties": {
+          "content": {
+            "type": "string",
+            "description": "Raw YAML content."
+          },
+          "name": {
+            "type": "string",
+            "description": "Module name (must match the `name` field in the YAML)."
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "status",
+      "description": "Orchestrator status and discovery"
+    },
+    {
+      "name": "auth",
+      "description": "Operator authentication"
+    },
+    {
+      "name": "operators",
+      "description": "Operator management"
+    },
+    {
+      "name": "agents",
+      "description": "Agent inventory, tags, and attributes"
+    },
+    {
+      "name": "metrics",
+      "description": "Agent system metrics"
+    },
+    {
+      "name": "terminal",
+      "description": "Remote terminal sessions"
+    },
+    {
+      "name": "maintenance",
+      "description": "Maintenance windows"
+    },
+    {
+      "name": "channels",
+      "description": "Notification channels"
+    },
+    {
+      "name": "notifications",
+      "description": "Operator notifications"
+    },
+    {
+      "name": "modules",
+      "description": "State module storage"
+    },
+    {
+      "name": "assignments",
+      "description": "Module assignments"
+    },
+    {
+      "name": "state",
+      "description": "State application, planning, and drift"
+    },
+    {
+      "name": "secrets",
+      "description": "Secret management"
+    },
+    {
+      "name": "audit",
+      "description": "Audit log"
+    }
+  ]
+}
