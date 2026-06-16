@@ -47,7 +47,9 @@ export default defineConfig({
 						{ label: 'Overview', slug: 'reference' },
 						{
 							label: 'CLI',
-							autogenerate: { directory: 'reference/cli' },
+							items: [
+								{ autogenerate: { directory: 'reference/cli' } },
+							],
 						},
 						...openAPISidebarGroups,
 					],
