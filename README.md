@@ -1,6 +1,6 @@
 # ordo-docs
 
-Source for the Ordo documentation site, served at `docs.ordo.ephyrasoftware.com`.
+Source for the Ordo documentation site, served at `docs.getordo.dev`.
 
 This site is built with [Astro](https://astro.build/) and [Starlight](https://starlight.astro.build/), and deployed by [Netlify](https://www.netlify.com/) on every push to `main`.
 

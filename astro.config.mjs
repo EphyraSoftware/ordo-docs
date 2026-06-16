@@ -5,7 +5,7 @@ import starlightOpenAPI, { openAPISidebarGroups } from 'starlight-openapi';
 
 // https://astro.build/config
 export default defineConfig({
-	site: 'https://docs.ordo.ephyrasoftware.com',
+	site: 'https://docs.getordo.dev',
 	integrations: [
 		starlight({
 			title: 'Ordo',

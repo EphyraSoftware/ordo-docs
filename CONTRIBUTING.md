@@ -1,6 +1,6 @@
 # Contributing to the Ordo documentation
 
-Thanks for considering a contribution. This repository holds the source for the Ordo documentation site at `docs.ordo.ephyrasoftware.com`. The site itself is built with [Astro](https://astro.build/) and the [Starlight](https://starlight.astro.build/) docs theme.
+Thanks for considering a contribution. This repository holds the source for the Ordo documentation site at `docs.getordo.dev`. The site itself is built with [Astro](https://astro.build/) and the [Starlight](https://starlight.astro.build/) docs theme.
 
 ## What kinds of contributions are welcome
 
