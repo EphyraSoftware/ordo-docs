@@ -13,9 +13,9 @@ step with each release.
   API, rendered from its OpenAPI document.
 - **State file format & configuration** — machine-readable JSON Schemas are
   published for editor autocompletion and CI validation:
-  - Module files — `https://getordo.dev/schemas/module/v1.json`
-  - Orchestrator config — `https://getordo.dev/schemas/orchestrator-config/v1.json`
-  - Agent config — `https://getordo.dev/schemas/agent-config/v1.json`
+  - Module files (`*.ordo.yaml`) — `https://getordo.dev/schemas/module/v1.json`
+  - Orchestrator config (`orchestrator.yaml`) — `https://getordo.dev/schemas/orchestrator-config/v1.json`
+  - Agent config (`agent.yaml`) — `https://getordo.dev/schemas/agent-config/v1.json`
 
 ## Using the schemas
 
@@ -26,7 +26,9 @@ file:
 # yaml-language-server: $schema=https://getordo.dev/schemas/module/v1.json
 ```
 
-or associate a file pattern via the `yaml.schemas` setting.
+or associate the file patterns via the `yaml.schemas` setting — `*.ordo.yaml`
+with the module schema, and `orchestrator.yaml` / `agent.yaml` with the matching
+config schemas.
 
 **JetBrains IDEs** — map the file pattern to the schema URL under
 *Languages & Frameworks → Schemas and DTDs → JSON Schema Mappings*.
