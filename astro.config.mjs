@@ -2,6 +2,7 @@
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 import starlightOpenAPI, { openAPISidebarGroups } from 'starlight-openapi';
+import starlightLlmsTxt from 'starlight-llms-txt';
 
 // https://astro.build/config
 export default defineConfig({
@@ -64,6 +65,13 @@ export default defineConfig({
 				},
 			],
 			plugins: [
+				// Emit /llms.txt and /llms-full.txt so AI tools can ingest the
+				// docs in one fetch. Pairs with the in-repo AI tooling context
+				// shipped from EphyraSoftware/ordo (ai-context/ tree).
+				starlightLlmsTxt({
+					description:
+						'Self-hosted, declarative infrastructure management for stateful machines. Module authors write *.ordo.yaml state files; operators apply state to a tagged fleet.',
+				}),
 				starlightOpenAPI([
 					{
 						base: 'reference/api',
