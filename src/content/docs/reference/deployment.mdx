@@ -1,0 +1,49 @@
+---
+title: Deployment templates
+description: Example configuration files and systemd units for running Ordo.
+---
+
+import { Code } from '@astrojs/starlight/components';
+
+export const raw = import.meta.glob('../../../deploy/*', {
+	query: '?raw',
+	import: 'default',
+	eager: true,
+});
+
+export const baseName = (p) => p.split('/').pop();
+export const isHidden = (p) => baseName(p).startsWith('.');
+export const langOf = (p) =>
+	baseName(p).endsWith('.service')
+		? 'ini'
+		: baseName(p).endsWith('.example') || baseName(p).endsWith('.yaml')
+			? 'yaml'
+			: 'text';
+// Config files first, then service units; alphabetical within each group.
+export const rank = (p) => (baseName(p).endsWith('.service') ? 1 : 0);
+export const files = Object.keys(raw)
+	.filter((p) => !isHidden(p))
+	.sort((a, b) => rank(a) - rank(b) || baseName(a).localeCompare(baseName(b)));
+
+Example configuration files and systemd units for running the orchestrator and
+agent as services. Copy a template, then change the values your deployment
+requires. See the [Getting Started](/getting-started/) guide for the full
+walkthrough.
+
+{files.length === 0 ? (
+	<p>
+		These templates are published from the latest Ordo release and appear here
+		once synced. In the meantime, see{' '}
+		<a href="https://github.com/EphyraSoftware/ordo/tree/main/packaging">
+			<code>packaging/</code>
+		</a>{' '}
+		in the main repository.
+	</p>
+) : (
+	files.map((p) => (
+		<section>
+			<h2 id={baseName(p)}>{baseName(p)}</h2>
+			<Code code={raw[p]} lang={langOf(p)} title={baseName(p)} />
+		</section>
+	))
+)}

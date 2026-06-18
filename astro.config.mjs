@@ -51,6 +51,7 @@ export default defineConfig({
 								{ autogenerate: { directory: 'reference/cli' } },
 							],
 						},
+						{ label: 'Deployment templates', slug: 'reference/deployment' },
 						...openAPISidebarGroups,
 					],
 				},
