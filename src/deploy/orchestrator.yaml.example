@@ -1,0 +1,65 @@
+# Ordo orchestrator configuration — example.
+#
+# Every option is shown with its default value. Commented lines are defaults you
+# can leave alone; uncomment and change only what you need. The uncommented
+# settings below are the ones a real deployment must or should set.
+#
+# Schema (editor autocompletion / CI validation):
+#   https://getordo.dev/schemas/orchestrator-config/v1.json
+
+# ── Must be set on first run ────────────────────────────────────────────────
+# The bootstrap operator. Both are required the first time the orchestrator
+# starts (when no operators exist yet) and ignored on every start afterwards.
+# Get the public key from `ordo operator init` (or `ordo operator whoami`).
+bootstrap_key: "PASTE_OPERATOR_PUBLIC_KEY_HEX"
+# 1-64 letters/digits/-/_, must start with a letter.
+bootstrap_username: "CHOOSE_A_USERNAME"
+
+# ── Recommended ─────────────────────────────────────────────────────────────
+# Interface the management API binds. The default (127.0.0.1) is reachable only
+# from the orchestrator host itself — fine for a single-machine/dev setup. Bind
+# all interfaces so the web UI and CLI work from other machines; choose a
+# specific address for a more complex network.
+api_host: "0.0.0.0"
+
+# ── Networking (defaults shown) ─────────────────────────────────────────────
+# TCP port on which the orchestrator accepts agent connections.
+# agent_port: 4747
+# HTTP port on which the management API is served.
+# api_port: 4748
+# Address advertised to agents during discovery; empty = auto-detect.
+# advertised_host: ""
+
+# ── TLS (defaults shown) ────────────────────────────────────────────────────
+# TLS is enabled by default; a self-signed certificate is generated on first
+# start and pinned by clients on first connection (trust-on-first-use).
+# tls_enabled: true
+# Provide both to use your own PEM certificate instead of the self-signed one.
+# tls_cert: "/etc/ordo/tls/cert.pem"
+# tls_key: "/etc/ordo/tls/key.pem"
+# Assert that a TLS-terminating reverse proxy fronts the API. Only relevant when
+# tls_enabled is false; permits secret writes over the (proxied) plaintext hop.
+# trust_proxy_tls: false
+
+# ── Capacity and sessions (defaults shown) ──────────────────────────────────
+# Maximum number of simultaneously pending agents awaiting approval.
+# pending_capacity: 100
+# Seconds a web UI / API session token remains valid.
+# session_token_expiry_secs: 3600
+
+# ── Metrics (defaults shown) ────────────────────────────────────────────────
+# metrics:
+#   poll_interval: 60      # seconds between polling each agent for metrics
+#   retention: 86400       # seconds to retain metric samples (24h)
+
+# ── Audit log (defaults shown) ──────────────────────────────────────────────
+# audit:
+#   retention_days: 90     # 0 disables automatic pruning
+
+# ── Drift detection (defaults shown) ────────────────────────────────────────
+# drift:
+#   enabled: true
+#   interval: 3600           # seconds between drift checks per agent
+#   max_concurrent: 8        # max in-flight drift checks across all agents
+#   skip_recently_applied: 300   # suppress checks for N seconds after an apply
+#   retention_days: 30       # how long to retain drift records

@@ -1,0 +1,37 @@
+[Unit]
+Description=Ordo orchestrator
+Documentation=https://docs.getordo.dev
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/ordo-orchestrator --config /etc/ordo/orchestrator.yaml --data-dir /var/lib/ordo-orchestrator
+Restart=on-failure
+RestartSec=5
+
+# Isolated transient system user; StateDirectory gives a persistent, owned
+# /var/lib/ordo-orchestrator for the identity key and the redb store. The
+# orchestrator only talks over the network and reads its config, so it can run
+# fully sandboxed (unlike the agent, which manages the host).
+DynamicUser=yes
+StateDirectory=ordo-orchestrator
+StateDirectoryMode=0750
+
+# Hardening
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_INET AF_INET6
+RestrictNamespaces=yes
+LockPersonality=yes
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+
+[Install]
+WantedBy=multi-user.target

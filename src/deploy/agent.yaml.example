@@ -1,0 +1,27 @@
+# Ordo agent configuration — example.
+#
+# Every option is shown with its default value, all commented out: the defaults
+# are sensible, so an agent runs with no configuration at all. Uncomment only
+# what you want to change. The agent hot-reloads this file when started with
+# `--config`, so changes apply without a restart.
+#
+# The orchestrator address is NOT set here — it is passed to the `connect`
+# subcommand (e.g. `ordo-agent connect 192.168.40.243:4747`).
+#
+# Schema (editor autocompletion / CI validation):
+#   https://getordo.dev/schemas/agent-config/v1.json
+
+# ── Remote terminal (defaults shown) ────────────────────────────────────────
+# Lets operators open interactive PTY sessions on this machine through the
+# orchestrator. Disabled by default.
+# remote_terminal:
+#   enabled: false
+#   shell: ""                          # empty = platform default (/bin/bash, powershell.exe)
+#   allow_operator_shell_override: false   # let the operator choose the shell per session
+#   max_sessions: 100                  # max concurrent terminal sessions
+
+# ── Metrics (defaults shown) ────────────────────────────────────────────────
+# System health reporting (disk, memory, CPU) to the orchestrator.
+# metrics:
+#   enabled: true
+#   collection_interval: 30            # seconds between samples

@@ -1,0 +1,24 @@
+[Unit]
+Description=Ordo agent
+Documentation=https://docs.getordo.dev
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# Top-level options (--config, --data-dir) come BEFORE the `connect` subcommand;
+# replace the address with your orchestrator's host:agent_port.
+ExecStart=/usr/local/bin/ordo-agent --config /etc/ordo/agent.yaml --data-dir /var/lib/ordo-agent connect ORCHESTRATOR_HOST:4747
+Restart=on-failure
+RestartSec=5
+
+# The agent manages this machine — it writes files and controls services as
+# declared state requires — so it runs as root WITHOUT the filesystem sandboxing
+# used for the orchestrator. ProtectSystem/ProtectHome/DynamicUser would stop it
+# doing its job. StateDirectory persists the agent's identity and pinned
+# orchestrator key.
+User=root
+StateDirectory=ordo-agent
+
+[Install]
+WantedBy=multi-user.target
