@@ -3,22 +3,185 @@ title: Getting Started
 description: Install Ordo, bootstrap an orchestrator, and connect your first agent.
 ---
 
-This section will walk you through installing Ordo, starting an orchestrator, connecting your first agent, and applying your first state change.
+import { Steps, Aside, Code } from '@astrojs/starlight/components';
+import orchestratorConfig from '../../deploy/orchestrator.yaml.example?raw';
+import orchestratorUnit from '../../deploy/ordo-orchestrator.service?raw';
+import agentConfig from '../../deploy/agent.yaml.example?raw';
+import agentUnit from '../../deploy/ordo-agent.service?raw';
 
-:::note
-Content under construction. The full walkthrough lands once the desired-state and secret-distribution surfaces stabilise.
-:::
+This guide walks you from nothing to a managed fleet, moving across three
+machines: your **workstation**, the **orchestrator** host, and a **machine you
+want to manage**. The configuration files and systemd units shown below are the
+same templates published with each release (also listed on the
+[Deployment templates](/reference/deployment/) reference page).
 
 ## What you will learn
 
-- Installing the `ordo`, `ordo-orchestrator`, and `ordo-agent` binaries on Linux, macOS, and Windows
-- Bootstrapping an orchestrator and creating the first operator identity
-- Connecting an agent and approving it from the operator CLI
-- Tagging an agent and applying a small declarative state module to it
-- Inspecting the audit log and apply history afterwards
+- Installing the right Ordo binaries on each machine
+- Creating the first operator identity and bootstrapping an orchestrator
+- Running the orchestrator and an agent as systemd services
+- Approving and tagging an agent from the operator CLI
+- Opening the web UI
 
 ## Prerequisites
 
-- A machine to run the orchestrator (Linux, macOS, or Windows)
-- One or more machines to run agents — these can be the same machine as the orchestrator while you are exploring
-- Network connectivity from each agent to the orchestrator on the configured ports
+- A machine to run the orchestrator, and one or more machines to run agents.
+  These can be the same machine while you are exploring — with one caveat: Ordo
+  does not support an agent managing the orchestrator's own host. Other state on
+  that machine can still be managed normally.
+- Network connectivity from each agent to the orchestrator on the agent port
+  (`4747` by default).
+
+<Aside type="note">
+This walkthrough targets Linux with systemd, matching the unit files shipped
+with Ordo. The binaries also run on macOS and Windows; service management for
+those platforms is not yet covered here.
+</Aside>
+
+## 1. Set up your workstation
+
+On the machine you will operate Ordo from, install the client tools (`ordo` and
+`ordo-state`):
+
+```sh
+curl -fsSL https://getordo.dev/install.sh | sh
+```
+
+<Aside type="note">
+On Windows, `irm https://getordo.dev/install.ps1 | iex` installs the client
+tools instead.
+</Aside>
+
+Then generate an operator keypair:
+
+```sh
+ordo operator init
+```
+
+This prints your **public key** (hex) and **operator ID**. The public key
+bootstraps the orchestrator in the next step; the private key stays in the
+operator data directory and is never shared. If you lose the public key, print
+it again with:
+
+```sh
+ordo operator whoami
+```
+
+## 2. Set up the orchestrator
+
+On the orchestrator host, install the orchestrator:
+
+```sh
+curl -fsSL https://getordo.dev/install.sh | sh -s -- ordo-orchestrator
+```
+
+Confirm where it landed — the systemd unit below references `/usr/local/bin`:
+
+```sh
+which ordo-orchestrator
+```
+
+Create the configuration directory and an `orchestrator.yaml`. Start from the
+template below — every option shows its default, commented out unless it must be
+set. Paste your public key from step 1 into `bootstrap_key`.
+
+```sh
+sudo mkdir -p /etc/ordo
+```
+
+<Code code={orchestratorConfig} lang="yaml" title="/etc/ordo/orchestrator.yaml" />
+
+<Aside type="tip">
+`api_host: "0.0.0.0"` makes the web UI and CLI reachable from other machines. On
+a single-machine trial you can drop it (the API then binds `127.0.0.1`). TLS is
+on by default — the orchestrator generates a self-signed certificate on first
+start, which clients pin on first connection.
+</Aside>
+
+Install the unit file, then enable and start it:
+
+<Code code={orchestratorUnit} lang="ini" title="/etc/systemd/system/ordo-orchestrator.service" />
+
+```sh
+sudo systemctl daemon-reload
+sudo systemctl enable --now ordo-orchestrator
+journalctl -u ordo-orchestrator -f
+```
+
+A first-run failure is almost always a missing or invalid `bootstrap_key` /
+`bootstrap_username`.
+
+## 3. Connect an agent
+
+On the machine you want to manage, install the agent:
+
+```sh
+curl -fsSL https://getordo.dev/install.sh | sh -s -- ordo-agent
+```
+
+Create an `agent.yaml`. The defaults are sensible — the file is mostly a place
+to opt into the remote terminal later:
+
+<Code code={agentConfig} lang="yaml" title="/etc/ordo/agent.yaml" />
+
+Install the agent unit, replacing `ORCHESTRATOR_HOST` with your orchestrator's
+address:
+
+<Code code={agentUnit} lang="ini" title="/etc/systemd/system/ordo-agent.service" />
+
+<Aside type="caution">
+The agent manages the machine — it writes files and controls services as your
+declared state requires — so it runs as **root with no filesystem sandbox**.
+</Aside>
+
+```sh
+sudo systemctl daemon-reload
+sudo systemctl enable --now ordo-agent
+journalctl -u ordo-agent -f
+```
+
+On first connection the agent pins the orchestrator's key and enters the
+**Pending** state on the orchestrator, awaiting your approval.
+
+<Aside type="tip">
+You can approve and tag the agent from the CLI as shown below, or skip ahead to
+the [web UI](#5-open-the-web-ui) and do it there instead.
+</Aside>
+
+## 4. Approve and tag the agent
+
+Back on your workstation, list agents, approve the pending one, and tag it so
+state can target it later:
+
+```sh
+ordo agents
+ordo agents approve <node-id> --name client-01
+ordo agents tag client-01 group=home
+```
+
+## 5. Open the web UI
+
+Create a connection profile pointing at the orchestrator. The first profile you
+create automatically becomes the default, so the CLI uses it with no further
+configuration:
+
+```sh
+ordo profile create home --host <orchestrator-host>
+```
+
+Then mint a web UI session and open the printed URL:
+
+```sh
+ordo web-login
+```
+
+It prints a login token and a
+`https://<orchestrator-host>:4748/ui/auth/callback?token=…` URL — open it in a
+browser to reach the UI authenticated as your operator.
+
+## Next steps
+
+Your fleet is connected and managed. From here you can author a state module and
+apply it to the agent's tags — see the [Reference](/reference/) for the state
+file format and CLI, and the [Deployment templates](/reference/deployment/) for
+the raw configuration and unit files.
