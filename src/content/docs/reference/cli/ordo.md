@@ -19,6 +19,7 @@ This document contains the help content for the `ordo` command-line program.
 * [`ordo discover`↴](#ordo-discover)
 * [`ordo operator`↴](#ordo-operator)
 * [`ordo operator init`↴](#ordo-operator-init)
+* [`ordo operator whoami`↴](#ordo-operator-whoami)
 * [`ordo operator add`↴](#ordo-operator-add)
 * [`ordo operator list`↴](#ordo-operator-list)
 * [`ordo operator remove`↴](#ordo-operator-remove)
@@ -240,6 +241,7 @@ Manage operators
 ###### **Subcommands:**
 
 * `init` — Generate an operator keypair
+* `whoami` — Print the local operator identity (public key and operator ID)
 * `add` — Add a new operator
 * `list` — List operators
 * `remove` — Remove an operator (soft delete)
@@ -255,6 +257,14 @@ Generate an operator keypair
 ###### **Options:**
 
 * `--from-ssh <FROM_SSH>` — Import an existing Ed25519 SSH keypair instead of generating a new one
+
+
+
+## `ordo operator whoami`
+
+Print the local operator identity (public key and operator ID)
+
+**Usage:** `ordo operator whoami`
 
 
 
