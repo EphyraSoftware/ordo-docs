@@ -835,8 +835,8 @@ Apply, plan, and inspect state operations
 
 ###### **Subcommands:**
 
-* `apply` — Apply one or more modules to an agent
-* `plan` — Preview the changes a module set would produce, without applying
+* `apply` — Apply an agent's assigned modules, plus any named ad-hoc
+* `plan` — Preview an apply without changing anything
 * `drift` — Compare the agent's current machine state against the last successful apply
 * `query` — Query an agent's believed machine state (applied, pending removals, unapplied)
 * `list` — List recent state operations
@@ -848,9 +848,11 @@ Apply, plan, and inspect state operations
 
 ## `ordo state apply`
 
-Apply one or more modules to an agent
+Apply an agent's assigned modules, plus any named ad-hoc.
 
-**Usage:** `ordo state apply [OPTIONS] --module <MODULES> <NODE_ID>`
+With no `--module`, the agent is reconciled to its assignments: the union of the modules of every assignment whose selector matches it. Each `--module` adds a module on top for this run only — temporary unless the module is itself backed by a matching assignment. With no matching assignments and no `--module`, the desired set is empty and previously applied resources are removed; run `state plan` first to preview.
+
+**Usage:** `ordo state apply [OPTIONS] <NODE_ID>`
 
 ###### **Arguments:**
 
@@ -858,16 +860,18 @@ Apply one or more modules to an agent
 
 ###### **Options:**
 
-* `--module <MODULES>` — Module names to apply (repeatable)
+* `--module <MODULES>` — Extra modules to apply ad-hoc, on top of the agent's assignments (repeatable)
 * `--json` — Output the full apply response as JSON
 
 
 
 ## `ordo state plan`
 
-Preview the changes a module set would produce, without applying
+Preview an apply without changing anything.
 
-**Usage:** `ordo state plan [OPTIONS] --module <MODULES> <NODE_ID>`
+Resolves the same desired set as `state apply` — the agent's assignments plus any `--module` named here — and reports the diff.
+
+**Usage:** `ordo state plan [OPTIONS] <NODE_ID>`
 
 ###### **Arguments:**
 
@@ -875,7 +879,7 @@ Preview the changes a module set would produce, without applying
 
 ###### **Options:**
 
-* `--module <MODULES>` — Module names to plan (repeatable)
+* `--module <MODULES>` — Extra modules to plan ad-hoc, on top of the agent's assignments (repeatable)
 * `--json` — Output the full plan response as JSON
 
 
