@@ -16,6 +16,15 @@ export default defineConfig({
 			title: 'Ordo',
 			description:
 				'Self-hosted, declarative infrastructure management for stateful machines.',
+			logo: {
+				src: './src/assets/ordo-mark.svg',
+				alt: 'Ordo',
+			},
+			customCss: ['./src/styles/theme.css'],
+			components: {
+				// Append a getordo.dev link to the header social cluster.
+				SocialIcons: './src/components/SocialIcons.astro',
+			},
 			head: [
 				// Declare the colour scheme during HTML parsing so the browser
 				// paints a dark canvas on the first frame. Without this the
@@ -25,6 +34,26 @@ export default defineConfig({
 				{
 					tag: 'meta',
 					attrs: { name: 'color-scheme', content: 'dark light' },
+				},
+				// Brand fonts, matching the marketing site.
+				{
+					tag: 'link',
+					attrs: { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
+				},
+				{
+					tag: 'link',
+					attrs: {
+						rel: 'preconnect',
+						href: 'https://fonts.gstatic.com',
+						crossorigin: true,
+					},
+				},
+				{
+					tag: 'link',
+					attrs: {
+						rel: 'stylesheet',
+						href: 'https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap',
+					},
 				},
 			],
 			social: [
