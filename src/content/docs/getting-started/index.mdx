@@ -1,0 +1,52 @@
+---
+title: Introduction
+description: What Ordo is, and the path from nothing to a managed fleet.
+sidebar:
+  order: 1
+---
+
+import { Aside, Card } from '@astrojs/starlight/components';
+
+Ordo is a self-hosted, declarative infrastructure management tool for teams
+running real workloads on their own bare metal and VMs. You declare the state
+you want, Ordo watches for drift, and you apply changes deliberately — with a
+full audit trail, and no dependency on a hosted control plane.
+
+This section walks you from nothing to a managed fleet, moving across three
+machines: your **workstation**, the **orchestrator** host, and a **machine you
+want to manage**. The configuration files and systemd units shown along the way
+are the same templates published with each release (also listed on the
+[Deployment templates](/reference/deployment/) reference page).
+
+<Card title="Start here" icon="rocket">
+Work through this section in order: [install Ordo](/getting-started/install/),
+[bootstrap the orchestrator](/getting-started/bootstrap/),
+[connect an agent](/getting-started/connect-agent/), then
+[run your first apply](/getting-started/first-apply/). That is the whole path —
+once an agent is reporting in and you have applied a module, there is nothing
+else to wire up.
+</Card>
+
+## What you will learn
+
+- Installing the right Ordo binaries on each machine
+- Creating the first operator identity and bootstrapping an orchestrator
+- Running the orchestrator and an agent as systemd services
+- Approving and tagging an agent from the operator CLI
+- Opening the web UI, and applying your first module
+
+## Prerequisites
+
+- A machine to run the orchestrator, and one or more machines to run agents.
+  These can be the same machine while you are exploring. Ordo does not manage
+  its own orchestrator installation and configuration, but the orchestrator's
+  host can otherwise be managed like any other machine — run an agent on it and
+  declare state as normal.
+- Network connectivity from each agent to the orchestrator on the agent port
+  (`4747` by default).
+
+<Aside type="note">
+This walkthrough targets Linux with systemd, matching the unit files shipped
+with Ordo. The binaries also run on macOS and Windows; service management for
+those platforms is not yet covered here.
+</Aside>

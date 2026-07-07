@@ -17,18 +17,6 @@ step with each release.
   - Orchestrator config (`orchestrator.yaml`) — `https://getordo.dev/schemas/orchestrator-config/v1.json`
   - Agent config (`agent.yaml`) — `https://getordo.dev/schemas/agent-config/v1.json`
 
-## Using the schemas
-
-**VS Code** (Red Hat YAML extension) — add a modeline to the top of a module
-file:
-
-```yaml
-# yaml-language-server: $schema=https://getordo.dev/schemas/module/v1.json
-```
-
-or associate the file patterns via the `yaml.schemas` setting — `*.ordo.yaml`
-with the module schema, and `orchestrator.yaml` / `agent.yaml` with the matching
-config schemas.
-
-**JetBrains IDEs** — map the file pattern to the schema URL under
-*Languages & Frameworks → Schemas and DTDs → JSON Schema Mappings*.
+For how to wire the module schema into your editor, see
+[Writing state modules](/guides/writing-state-modules/); the same approach
+applies to the two config schemas above.

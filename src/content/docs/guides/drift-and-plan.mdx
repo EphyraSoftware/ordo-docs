@@ -1,0 +1,88 @@
+---
+title: Drift & plan mode
+description: Preview changes before applying them, and see when a machine no longer matches its declared state.
+sidebar:
+  order: 2
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Ordo separates *deciding* to change a machine from *changing* it, and keeps
+watching once a change has been applied. Two operations do the work: a **plan**
+shows what an apply *would* change, and a **drift check** shows how a machine has
+diverged from what was last applied to it.
+
+Both are the same computation underneath. The orchestrator sends the target
+agent a set of desired resources; the **agent** reads the *actual* state of each
+one on its machine and reports the per-resource difference — changing nothing.
+Reading live machine state always requires the agent; only **apply** executes
+changes. The orchestrator never assumes it knows a machine's current state — it
+asks. What differs between the two operations is entirely orchestrator-side: the
+desired state each diff is taken against.
+
+- A **plan** diffs against the module set you name, resolved fresh against the
+  agent's current attributes — the state you are *about to* apply.
+- A **drift check** diffs against the immutable snapshot of what was *last
+  successfully applied* to that agent, which the orchestrator recorded at apply
+  time. It answers "has the machine moved away from what we applied?", not "would
+  we apply something different now?".
+
+## Plan mode
+
+A plan is an accurate diff of what an apply would do — nothing is applied while
+you plan:
+
+```sh
+ordo state plan --module <module> <node-id>
+```
+
+The orchestrator resolves the module against the target agent's current
+attributes; the agent then diffs each resolved resource against the live machine,
+and the plan predicts any [change triggers](/guides/writing-state-modules/#change-triggers)
+(a reload or restart that would fire). When it looks right, the same module set
+applies:
+
+```sh
+ordo state apply --module <module> <node-id>
+```
+
+<Aside type="note">
+Plan is read-only for the built-in resource types. A `script` resource's `check`
+command, however, actually runs during a plan — that is how its status is
+predicted — so a check with side effects makes the plan non-read-only for that
+resource. Keep `check` commands side-effect-free.
+</Aside>
+
+<Aside type="tip">
+Assignments have the same pair — `ordo assignments plan <name>` previews across
+every agent a selector matches, and `ordo assignments apply <name>` fans the
+change out.
+</Aside>
+
+## Drift detection
+
+After a successful apply, the orchestrator records what was applied. Drift is
+the gap between that record and the machine's *actual* state — a file edited by
+hand, a service stopped, a package removed.
+
+Check it on demand:
+
+```sh
+ordo state drift <node-id>          # this agent, against its last apply
+ordo state drift-list               # every agent with outstanding drift
+ordo state drift-show <node-id>     # the detailed per-resource diff
+```
+
+The orchestrator also schedules periodic drift checks itself (agents do not
+decide their own cadence), so drift surfaces without anyone running a command.
+
+## Surfaced, never silently fixed
+
+Ordo does **not** automatically re-apply on drift. When a check finds drift it
+raises a `drift.detected` notification and records an audit event — then leaves
+the decision to you. Re-apply to reconcile, or investigate first; either way the
+change is visible rather than quietly undone.
+
+In the web UI, the **Reconcile** view is the single place that shows what needs
+attention and lets you apply from there. It surfaces and triggers work; it never
+applies on its own.

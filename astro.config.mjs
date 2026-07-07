@@ -6,6 +6,11 @@ import starlightOpenAPI, { openAPISidebarGroups } from 'starlight-openapi';
 // https://astro.build/config
 export default defineConfig({
 	site: 'https://docs.getordo.dev',
+	// No standalone docs landing page — the marketing site (getordo.dev) is the
+	// front door. The docs root lands on the first page of the walkthrough.
+	redirects: {
+		'/': '/getting-started/',
+	},
 	integrations: [
 		starlight({
 			title: 'Ordo',
@@ -39,8 +44,14 @@ export default defineConfig({
 				]),
 			],
 			sidebar: [
-				{ label: 'Getting Started', slug: 'getting-started' },
-				{ label: 'Concepts', slug: 'concepts' },
+				{
+					label: 'Getting Started',
+					items: [{ autogenerate: { directory: 'getting-started' } }],
+				},
+				{
+					label: 'Guides',
+					items: [{ autogenerate: { directory: 'guides' } }],
+				},
 				{
 					label: 'Reference',
 					items: [

@@ -1,0 +1,85 @@
+---
+title: Install
+description: Install the Ordo binaries on each machine, and create your operator identity.
+sidebar:
+  order: 2
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+Each Ordo component installs on the machine that runs it. The install script
+downloads a prebuilt binary, verifies its SHA-256 checksum, and checks the
+[minisign signature](https://getordo.dev/minisign.pub) when minisign is
+installed. Debian and RPM packages are published alongside the archives in the
+same release.
+
+## Install Ordo
+
+### Operator workstation
+
+The machine you operate Ordo from gets the `ordo` operator CLI and `ordo-state`
+for authoring and validating modules. This is the default install:
+
+<Tabs syncKey="os">
+	<TabItem label="Linux / macOS">
+		```sh
+		curl -fsSL https://getordo.dev/install.sh | sh
+		```
+	</TabItem>
+	<TabItem label="Windows">
+		```powershell
+		irm https://getordo.dev/install.ps1 | iex
+		```
+	</TabItem>
+</Tabs>
+
+### Orchestrator host
+
+The control host gets `ordo-orchestrator`:
+
+<Tabs syncKey="os">
+	<TabItem label="Linux / macOS">
+		```sh
+		curl -fsSL https://getordo.dev/install.sh | sh -s -- ordo-orchestrator
+		```
+	</TabItem>
+	<TabItem label="Windows">
+		```powershell
+		& ([scriptblock]::Create((irm https://getordo.dev/install.ps1))) -Bin ordo-orchestrator
+		```
+	</TabItem>
+</Tabs>
+
+### Managed machines
+
+Each machine you want to manage gets `ordo-agent`:
+
+<Tabs syncKey="os">
+	<TabItem label="Linux / macOS">
+		```sh
+		curl -fsSL https://getordo.dev/install.sh | sh -s -- ordo-agent
+		```
+	</TabItem>
+	<TabItem label="Windows">
+		```powershell
+		& ([scriptblock]::Create((irm https://getordo.dev/install.ps1))) -Bin ordo-agent
+		```
+	</TabItem>
+</Tabs>
+
+## Create your operator identity
+
+Back on your workstation, generate an operator keypair:
+
+```sh
+ordo operator init
+```
+
+This prints your **public key** (hex) and **operator ID**. The public key is
+used to bootstrap the orchestrator in the next step; the private key stays in
+the operator data directory and is never shared. If you lose track of the public
+key, print it again with:
+
+```sh
+ordo operator whoami
+```

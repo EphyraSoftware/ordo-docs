@@ -1,0 +1,56 @@
+# demo-compose-stack — worked example module
+#
+# Demonstrates running a Docker Compose stack under Ordo. Ordo owns the stack's
+# files (the compose file and the served content) as `file-unix` resources, and
+# a single checkless `script` resource drives `docker compose up -d` so Compose
+# itself does the reconciliation. See examples/README.md for the walkthrough and
+# the trade-offs this shape makes.
+name: demo-compose-stack
+# Linux agents only — this stack runs under Docker Compose.
+supports:
+  - {platform: linux}
+templates:
+  - id: compose
+    content: |
+      services:
+        web:
+          image: nginx:stable
+          restart: unless-stopped          # Docker handles reboot persistence
+          ports:
+            - "8080:80"
+          volumes:
+            - ./html:/usr/share/nginx/html:ro
+  - id: index
+    content: |
+      <!doctype html>
+      <html><body><h1>Served by an Ordo-managed Compose stack</h1></body></html>
+resources:
+  - id: stack-dir
+    resource: {directory-unix: {path: /opt/ordo-demo-stack, mode: "0755"}}
+  - id: html-dir
+    depends_on: [stack-dir]
+    resource: {directory-unix: {path: /opt/ordo-demo-stack/html, mode: "0755"}}
+  - id: compose-file
+    depends_on: [stack-dir]
+    resource:
+      file-unix: {path: /opt/ordo-demo-stack/docker-compose.yaml, template: compose, mode: "0644"}
+  - id: index-file
+    depends_on: [html-dir]
+    resource:
+      file-unix: {path: /opt/ordo-demo-stack/html/index.html, template: index, mode: "0644"}
+  - name: bring the stack up
+    depends_on: [compose-file, index-file]
+    resource:
+      script:
+        program: bash
+        manages: demo-compose-stack
+        # Re-run only when the compose or content files change, rather than on
+        # every apply (0027). On first apply they are created, so the stack
+        # comes up; later applies that change nothing leave it alone.
+        rerun_on: [compose-file, index-file]
+        apply: |
+          cd /opt/ordo-demo-stack || exit 1
+          docker compose up -d --remove-orphans
+        undo: |
+          cd /opt/ordo-demo-stack || exit 1
+          docker compose down
