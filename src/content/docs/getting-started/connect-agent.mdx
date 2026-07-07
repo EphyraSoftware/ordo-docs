@@ -1,0 +1,67 @@
+---
+title: Connect your first agent
+description: Run an agent, approve it, tag it, and open the web UI.
+sidebar:
+  order: 4
+---
+
+import { Aside, Code } from '@astrojs/starlight/components';
+import agentConfig from '../../../deploy/agent.yaml.example?raw';
+import agentUnit from '../../../deploy/ordo-agent.service?raw';
+
+With `ordo-agent` installed on the machine you want to manage (see
+[Install](/getting-started/install/)), create an `agent.yaml`. The defaults are
+sensible — the file is mostly a place to opt into the remote terminal later:
+
+<Code code={agentConfig} lang="yaml" title="/etc/ordo/agent.yaml" />
+
+Install the agent unit, replacing `ORCHESTRATOR_HOST` with your orchestrator's
+address:
+
+<Code code={agentUnit} lang="ini" title="/etc/systemd/system/ordo-agent.service" />
+
+<Aside type="caution">
+The agent manages the machine — it writes files and controls services as your
+declared state requires — so it runs as **root with no filesystem sandbox**.
+</Aside>
+
+Reload systemd so it picks up the new unit, then enable and start the agent
+(`--now` starts it immediately and enables it on boot). The last command follows
+the log so you can watch it connect:
+
+```sh
+sudo systemctl daemon-reload
+sudo systemctl enable --now ordo-agent
+journalctl -u ordo-agent -f
+```
+
+On first connection the agent pins the orchestrator's key and enters the
+**Pending** state on the orchestrator, awaiting your approval.
+
+## Approve and tag the agent
+
+Back on your workstation, list agents, approve the pending one, and tag it so
+state can target it later:
+
+```sh
+ordo agents
+ordo agents approve <node-id> --name client-01
+ordo agents tag client-01 group=home
+```
+
+<Aside type="tip">
+You can also approve and tag the agent from the web UI once it is open, below.
+</Aside>
+
+## Open the web UI
+
+Mint a web UI session and open the printed URL:
+
+```sh
+ordo web-login
+```
+
+It prints a login token and a
+`https://<orchestrator-host>:4748/ui/auth/callback?token=…` URL — open it in a
+browser to reach the UI authenticated as your operator. Sessions expire, so run
+`ordo web-login` again whenever you need a fresh login link.

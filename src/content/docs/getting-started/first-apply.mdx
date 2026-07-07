@@ -1,0 +1,91 @@
+---
+title: Your first apply
+description: Author a module, upload it, preview the plan, and apply it to your agent.
+sidebar:
+  order: 5
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+With an agent connected and tagged, you can declare some state and apply it.
+This page uses a tiny module so you can see the whole loop — author, plan,
+apply, check for drift. For the full authoring surface, see
+[Writing state modules](/guides/writing-state-modules/).
+
+## Author a module
+
+A module has a `name`, the configurations it `supports`, and an ordered list of
+`resources`. This one manages a single file:
+
+```yaml
+# hello.ordo.yaml
+name: hello-ordo
+supports:
+  - { platform: linux }
+resources:
+  - id: hello-file
+    resource:
+      file-unix:
+        path: /etc/ordo-hello
+        content: "Managed by Ordo.\n"
+        mode: "0644"
+```
+
+Validate it before it leaves your workstation:
+
+```sh
+ordo-state validate hello.ordo.yaml
+```
+
+## Upload it
+
+Modules live on the orchestrator, so `hello-ordo` has to be uploaded before you
+can plan or apply it by name. There is no `ordo` subcommand for this yet: upload
+it from the web UI (**Modules → Upload Module**), or `POST` it to
+`/api/v1/modules` on the [management API](/reference/api/) if you are scripting.
+Once uploaded, the orchestrator refers to it by name (`hello-ordo`).
+
+## Preview, then apply
+
+Preview the change against your agent's node ID first — a plan applies nothing:
+
+```sh
+ordo state plan --module hello-ordo <node-id>
+```
+
+The plan is an accurate diff of what would change. When it looks right, apply:
+
+```sh
+ordo state apply --module hello-ordo <node-id>
+```
+
+<Aside type="tip">
+To apply by tag instead of a single node, create an assignment that pairs the
+module with a tag selector, then apply it to every matching agent:
+
+```sh
+ordo assignments create home-hello --module hello-ordo --selector group=home
+ordo assignments apply home-hello
+```
+</Aside>
+
+## Confirm it stuck
+
+Ask the agent to compare its current machine state against the last successful
+apply:
+
+```sh
+ordo state drift <node-id>
+```
+
+Edit `/etc/ordo-hello` on the agent by hand and run it again — the change shows
+up as drift, surfaced but never silently reverted. See
+[Drift & plan mode](/guides/drift-and-plan/) for how Ordo tracks and reports it.
+
+## Next steps
+
+- [Writing state modules](/guides/writing-state-modules/) — packages, services,
+  templates, dependencies, and change triggers
+- [Secrets](/guides/secrets/) — deliver sensitive values without agents ever
+  touching the secret store
+- [Reference](/reference/) — the CLI, management API, and state-file schema

@@ -1,0 +1,33 @@
+---
+title: Example modules
+description: Worked, validated modules that ship with Ordo, rendered end to end.
+sidebar:
+  order: 4
+---
+
+import { Code } from '@astrojs/starlight/components';
+
+export const raw = import.meta.glob('../../../examples/*.ordo.yaml', {
+	query: '?raw',
+	import: 'default',
+	eager: true,
+});
+
+export const baseName = (p) => p.split('/').pop();
+export const modName = (p) => baseName(p).replace(/\.ordo\.yaml$/, '');
+export const files = Object.keys(raw).sort((a, b) =>
+	baseName(a).localeCompare(baseName(b)),
+);
+
+These modules validate with `ordo-state validate` and ship with every Ordo
+release. Each is a complete, working starting point — copy one, adjust it for
+your fleet, and apply it. They are rendered here verbatim from the published
+files, so what you read is exactly what ships. For how the pieces fit together,
+see [Writing state modules](/guides/writing-state-modules/).
+
+{files.map((p) => (
+	<section>
+		<h2 id={modName(p)}>{modName(p)}</h2>
+		<Code code={raw[p]} lang="yaml" title={baseName(p)} />
+	</section>
+))}

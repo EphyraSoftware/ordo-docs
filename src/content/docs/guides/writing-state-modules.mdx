@@ -1,0 +1,183 @@
+---
+title: Writing state modules
+description: The anatomy of a state module — resources, variants, templates, dependencies, and change triggers.
+sidebar:
+  order: 1
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+A **module** is a YAML document describing a unit of desired state. You declare
+*what* a machine should look like; Ordo plans *how* to reach and maintain that
+state. The full schema is published as a
+[JSON Schema](https://getordo.dev/schemas/module/v1.json). Associate it with
+`*.ordo.yaml` in your editor for autocompletion and validation — the quickest way
+is a modeline at the top of a module file:
+
+```yaml
+# yaml-language-server: $schema=https://getordo.dev/schemas/module/v1.json
+```
+
+Alternatively, map the `*.ordo.yaml` pattern to that URL in your editor's
+JSON-Schema settings (VS Code's Red Hat YAML extension, or JetBrains under
+*Languages & Frameworks → Schemas and DTDs*). The config-file schemas for
+`orchestrator.yaml` and `agent.yaml` are listed on the
+[reference](/reference/) page.
+
+## Anatomy
+
+A module has four top-level fields:
+
+- `name` — the module's stable identity, referenced when you apply it.
+- `supports` — the attribute combinations the module is designed for. Ordo
+  refuses to apply the module to any agent that matches none of these clauses.
+- `templates` — named, content-only fragments that resources can reference.
+- `resources` — an ordered list of resource declarations.
+
+```yaml
+name: caddy-site
+supports:
+  - { platform: linux, distro: debian, init_system: systemd }
+  - { platform: linux, distro: fedora, init_system: systemd }
+templates:
+  - id: caddyfile
+    content: |
+      :80 {
+        root * /var/www/caddy-site
+        file_server
+      }
+resources:
+  - id: caddyfile
+    resource:
+      file-unix:
+        path: /etc/caddy/Caddyfile
+        template: caddyfile
+        mode: "0644"
+```
+
+## Resource types
+
+Each resource has an `id` and a `resource` body whose single key selects the
+resource type. The first-class resources are:
+
+- **Packages** — `package-apt`, `package-dnf`, `package-brew`, `package-choco`,
+  `package-winget`. Same shape (`name`, optional `version`); the manager is
+  chosen by the key.
+- **Files & directories** — `file-unix`, `file-windows`, `directory-unix`,
+  `directory-windows`. A file takes inline `content` or a `template` reference
+  (the two are mutually exclusive), plus `owner`/`group`/`mode` on Unix.
+- **Services** — `service-systemd`, `service-launchd`, `service-windows`. Ordo
+  can configure each of these service types.
+- **Scripts** — `script`, the escape hatch for work the first-class resources do
+  not model (see below).
+
+Every resource is drift-checked and appears in the plan individually.
+
+## Variants
+
+A resource can be *universal* — one body that applies to every supported agent —
+or carry *variants* gated by `when` clauses on agent attributes. Use variants to
+swap the package manager per distro while keeping one logical resource:
+
+```yaml
+resources:
+  - id: caddy-pkg
+    variants:
+      - when: { platform: linux }
+        resource:
+          package-apt: { name: caddy }
+      - when: { platform: linux, distro: fedora }
+        resource:
+          package-dnf: { name: caddy }
+```
+
+Ordo resolves which variant applies for a given agent in three steps:
+
+1. Keep only the variants whose `when` clause matches the agent's attributes.
+2. Of those, the **most specific** one wins — the variant whose `when` names the
+   most attributes. Above, a Fedora agent matches both clauses, but the two-key
+   `{ platform, distro }` variant beats the one-key `{ platform }` variant, so it
+   installs with `package-dnf`. A Debian agent matches only the one-key variant
+   and installs with `package-apt`.
+3. A tie — two matching variants naming the same number of attributes — is an
+   error, as is a variant resource with no matching variant for the agent. Both
+   are caught by `ordo-state validate` before you apply.
+
+## Ordering and dependencies
+
+Resources apply in declaration order unless you override it with `depends_on`,
+which names the resource `id`s that must be applied first:
+
+```yaml
+resources:
+  - id: caddy-pkg
+    resource:
+      package-apt: { name: caddy }
+  - id: caddyfile
+    depends_on: [caddy-pkg]
+    resource:
+      file-unix:
+        path: /etc/caddy/Caddyfile
+        template: caddyfile
+        mode: "0644"
+```
+
+## Change triggers
+
+Services and scripts can react when a resource they depend on actually changes,
+rather than on every apply:
+
+- `reload_on` (systemd only) — reload the service when a listed resource changes.
+- `restart_on` (all service types) — restart the service when a listed resource
+  changes.
+- `rerun_on` (scripts) — re-run the script when a listed resource changes.
+
+A resource `id` may appear in a service's `reload_on` or its `restart_on`, but
+not both — otherwise a single change would ask the service to reload and restart
+at once. `ordo-state validate` rejects a module that lists the same `id` in both.
+For example, reload Caddy whenever its config file changes — with no dropped
+connections:
+
+```yaml
+  - id: caddy-service
+    depends_on: [caddyfile]
+    resource:
+      service-systemd:
+        name: caddy
+        enabled: true
+        running: true
+        reload_on: [caddyfile]
+```
+
+Triggered actions are predicted in the plan before they run, so you can see a
+reload or restart coming.
+
+## The script escape hatch
+
+When no first-class kind fits, a `script` resource runs commands. Because a bare
+script has no way to diff its own state, give it a `check` command whose exit
+status decides whether `apply` needs to run, and declare `manages`/`undo` so
+removing the resource can tear down what it created. Pair it with `rerun_on` to
+re-run only when its inputs change.
+
+<Aside type="caution">
+If a script's `apply` or `check` references a secret, the **entire** script body
+is redacted in plan output and logs — redaction is whole-field, not substring.
+See [Secrets](/guides/secrets/).
+</Aside>
+
+## Validate before you apply
+
+`ordo-state` validates and inspects modules locally, before they reach the
+orchestrator:
+
+```sh
+ordo-state validate caddy-site.ordo.yaml   # schema + semantic checks
+ordo-state deps caddy-site.ordo.yaml       # show the resolved apply order
+```
+
+Worked, validated [example modules](/guides/examples/) ship with Ordo — the
+[`caddy-site`](/guides/examples/#caddy-site) module models a static site entirely
+with first-class resources, and
+[`demo-compose-stack`](/guides/examples/#demo-compose-stack) shows the script
+escape hatch driving Docker Compose.

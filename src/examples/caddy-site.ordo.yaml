@@ -1,0 +1,74 @@
+# caddy-site — worked example module
+#
+# Hosts a static site with Caddy, modelled entirely with Ordo's first-class
+# resource types: the package installed with the right manager per distro,
+# config and content files, and a systemd service. Plan and drift diff every
+# piece. See examples/README.md for the walkthrough and the trade-offs.
+name: caddy-site
+# Linux + systemd, on the distros we package Caddy for below. Caddy ships a
+# `caddy.service` unit we adopt. To support another distro, add it here; if it
+# needs a different package manager, add an override variant to `caddy-pkg`.
+supports:
+  - {platform: linux, distro: debian, init_system: systemd}
+  - {platform: linux, distro: ubuntu, init_system: systemd}
+  - {platform: linux, distro: fedora, init_system: systemd}
+templates:
+  - id: caddyfile
+    content: |
+      # Serve the static site on port 80. Swap `:80` for a real domain
+      # (e.g. `site.example.com`) and Caddy provisions HTTPS automatically.
+      :80 {
+        root * /var/www/caddy-site
+        file_server
+      }
+  - id: index
+    content: |
+      <!doctype html>
+      <html><body><h1>Served by an Ordo-managed Caddy</h1></body></html>
+resources:
+  # apt is the default for every supported agent; fedora is more specific, so
+  # its variant wins and installs with dnf. The package name is the same — only
+  # the manager differs, which is what variant selection is for.
+  - id: caddy-pkg
+    variants:
+      - when: {platform: linux}
+        resource:
+          package-apt:
+            name: caddy
+      - when: {platform: linux, distro: fedora}
+        resource:
+          package-dnf:
+            name: caddy
+  - id: site-dir
+    resource:
+      directory-unix:
+        path: /var/www/caddy-site
+        mode: "0755"
+  - id: index-file
+    depends_on: [site-dir]
+    resource:
+      file-unix:
+        path: /var/www/caddy-site/index.html
+        template: index
+        mode: "0644"
+  - id: caddyfile
+    depends_on: [caddy-pkg]
+    resource:
+      file-unix:
+        path: /etc/caddy/Caddyfile
+        template: caddyfile
+        mode: "0644"
+  # Adopt the unit the package ships: no `exec_start`, so Ordo manages enablement
+  # and running state of the existing `caddy.service` rather than writing a unit.
+  # `reload_on` reloads Caddy (no dropped connections) whenever the Caddyfile
+  # changes — including the first apply, where installing the package pre-starts
+  # the unit with its default config before Ordo writes ours. This replaces the
+  # separate always-running reload script the example used before (0027).
+  - id: caddy-service
+    depends_on: [caddyfile, index-file]
+    resource:
+      service-systemd:
+        name: caddy
+        enabled: true
+        running: true
+        reload_on: [caddyfile]

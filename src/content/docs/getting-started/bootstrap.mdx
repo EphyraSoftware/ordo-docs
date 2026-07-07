@@ -1,0 +1,73 @@
+---
+title: Bootstrap the orchestrator
+description: Configure and run the orchestrator as a systemd service.
+sidebar:
+  order: 3
+---
+
+import { Steps, Aside, Code } from '@astrojs/starlight/components';
+import orchestratorConfig from '../../../deploy/orchestrator.yaml.example?raw';
+import orchestratorUnit from '../../../deploy/ordo-orchestrator.service?raw';
+
+With `ordo-orchestrator` installed on the control host (see
+[Install](/getting-started/install/)), confirm where it was installed — the
+systemd unit below references `/usr/local/bin`:
+
+```sh
+which ordo-orchestrator
+```
+
+## Write the configuration
+
+Create the configuration directory and an `orchestrator.yaml`. Start from the
+template below — every option shows its default, commented out unless it must be
+set. Paste your public key from the previous step into `bootstrap_key`.
+
+```sh
+sudo mkdir -p /etc/ordo
+```
+
+<Code code={orchestratorConfig} lang="yaml" title="/etc/ordo/orchestrator.yaml" />
+
+<Aside type="tip">
+`api_host: "0.0.0.0"` makes the web UI and CLI reachable from other machines. On
+a single-machine trial you can drop it (the API then binds `127.0.0.1`). TLS is
+on by default — the orchestrator generates a self-signed certificate on first
+start, which clients pin on first connection.
+</Aside>
+
+## Run it as a service
+
+Install the unit file:
+
+<Code code={orchestratorUnit} lang="ini" title="/etc/systemd/system/ordo-orchestrator.service" />
+
+Reload systemd so it picks up the new unit, then enable and start the service
+(`--now` starts it immediately and enables it on boot). The last command follows
+the log so you can watch it come up:
+
+```sh
+sudo systemctl daemon-reload
+sudo systemctl enable --now ordo-orchestrator
+journalctl -u ordo-orchestrator -f
+```
+
+A first-run failure is almost always a missing or invalid `bootstrap_key` /
+`bootstrap_username`.
+
+## Connect the operator CLI
+
+With the orchestrator running, point your workstation's `ordo` CLI at it by
+creating a connection profile. The first profile you create automatically
+becomes the default, so every later `ordo` command uses it with no extra flags:
+
+```sh
+ordo profile create home --host <orchestrator-host>
+```
+
+Confirm the CLI can reach the orchestrator — this is also the first time the CLI
+authenticates with the operator key you bootstrapped:
+
+```sh
+ordo status
+```
