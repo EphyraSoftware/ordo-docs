@@ -70,6 +70,7 @@ This document contains the help content for the `ordo` command-line program.
 * [`ordo state show`↴](#ordo-state-show)
 * [`ordo state drift-list`↴](#ordo-state-drift-list)
 * [`ordo state drift-show`↴](#ordo-state-drift-show)
+* [`ordo state upload`↴](#ordo-state-upload)
 * [`ordo assignments`↴](#ordo-assignments)
 * [`ordo assignments list`↴](#ordo-assignments-list)
 * [`ordo assignments show`↴](#ordo-assignments-show)
@@ -843,6 +844,7 @@ Apply, plan, and inspect state operations
 * `show` — Show per-resource results for a state operation
 * `drift-list` — List drift records, optionally filtered by agent and/or status
 * `drift-show` — Show details of a single drift record
+* `upload` — Validate a local module file and upload it to the orchestrator
 
 
 
@@ -975,6 +977,20 @@ Show details of a single drift record
 ###### **Options:**
 
 * `--json` — Output the full drift record as JSON
+
+
+
+## `ordo state upload`
+
+Validate a local module file and upload it to the orchestrator.
+
+The module must exist on the orchestrator (by name) before `state plan` or `state apply` can reference it. This validates the file the same way `ordo-state validate` does, then uploads it over the operator- authenticated channel — keeping the author → validate → upload → plan → apply loop in the CLI.
+
+**Usage:** `ordo state upload <FILE>`
+
+###### **Arguments:**
+
+* `<FILE>` — Path to the `*.ordo.yaml` module file to upload
 
 
 
