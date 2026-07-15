@@ -13,6 +13,20 @@ downloads a prebuilt binary, verifies its SHA-256 checksum, and checks the
 installed. Debian and RPM packages are published alongside the archives in the
 same release.
 
+:::tip[Optional: verify authenticity]
+The Linux/macOS installer verifies the release **signature** automatically — but
+only if [`minisign`](https://jedisct1.github.io/minisign/) is installed. Install
+it *before* running the script to get that guarantee:
+
+- macOS: `brew install minisign`
+- Debian/Ubuntu: `sudo apt install minisign`
+- Fedora/RHEL: `sudo dnf install minisign`
+
+Without it, downloads are still checked against their SHA-256 hashes, but the
+signature step — the check that would catch a tampered download host — is
+skipped, and the installer prints a note saying so.
+:::
+
 ## Install Ordo
 
 ### Operator workstation
