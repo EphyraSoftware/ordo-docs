@@ -1,0 +1,132 @@
+---
+title: AI tooling context
+description: Give AI coding assistants Ordo's conventions — the module schema, CLI, recipes, and error explanations — so they help instead of guess.
+sidebar:
+  order: 5
+---
+
+Ordo ships a ready-made **context bundle** for AI coding assistants. Point a tool
+at it and it learns Ordo's module schema, CLI, common recipes, and error
+explanations — so it helps you author state and run a fleet instead of guessing
+at commands and field names.
+
+It works with any assistant that reads an `AGENTS.md` or `CLAUDE.md` from your
+project (Claude Code, Cursor, GitHub Copilot, and others).
+
+## Set it up in one step
+
+If your assistant can browse the web and run commands, hand it this page and let
+it do the work. Copy the prompt and paste it into the assistant, from the project
+you want set up:
+
+```text title="Paste into your AI assistant"
+Set up the Ordo AI tooling context in this project.
+
+Read https://docs.getordo.dev/guides/ai-tooling-context/ and follow it.
+
+Pick the role that fits this project: "module-author" if it authors *.ordo.yaml
+state modules, "operator" if it runs or manages an Ordo fleet. Ask me if neither
+is clearly right.
+
+Important: if this project already has an AGENTS.md or CLAUDE.md, do not
+overwrite it — merge as the page describes.
+
+When you are done, tell me which role you installed and which files you changed.
+```
+
+Everything below is the same process done by hand.
+
+## Get it
+
+```sh
+curl -fsSL https://getordo.dev/ai-context.tar.gz | tar xz
+```
+
+That unpacks two role directories into the current directory, each with an
+`AGENTS.md` and a `CLAUDE.md`:
+
+```
+module-author/
+  AGENTS.md
+  CLAUDE.md
+operator/
+  AGENTS.md
+  CLAUDE.md
+```
+
+## Pick your role
+
+- **`module-author`** — for a repository where you write `*.ordo.yaml` state
+  modules. Teaches the schema, resource types, templating, dependencies, and
+  worked recipes.
+- **`operator`** — for where you run and manage a fleet. Covers bootstrapping,
+  applying state, drift, secrets, and the CLI workflows.
+
+## Use it
+
+The files go wherever your assistant reads project context — usually the project
+root. How you put them there depends on whether that project already has context
+of its own.
+
+:::caution
+If the project already has an `AGENTS.md` or `CLAUDE.md`, do not copy over it —
+that silently discards your own instructions. Check before you copy, and merge
+instead.
+:::
+
+### A project with no assistant context yet
+
+Copy the role's files straight in:
+
+```sh
+cp module-author/AGENTS.md module-author/CLAUDE.md /path/to/your/project/
+```
+
+### A project that already has context
+
+Keep your file and add Ordo's beside it under a distinct name:
+
+```sh
+cp module-author/AGENTS.md /path/to/your/project/ordo-AGENTS.md
+```
+
+Then pull it in from your existing context so both sets of instructions apply —
+in Claude Code, add the line `@ordo-AGENTS.md` to your `CLAUDE.md`. If your
+assistant has no import syntax, append the contents to your own file instead:
+
+```sh
+cat module-author/AGENTS.md >> /path/to/your/project/AGENTS.md
+```
+
+### AGENTS.md vs CLAUDE.md
+
+`AGENTS.md` is the canonical file — the emerging cross-tool convention.
+`CLAUDE.md` is a thin stub that just imports it (`@AGENTS.md`) for Claude Code,
+so both point at the same content. Keep whichever your tools use; keeping both is
+harmless.
+
+## Keep it current
+
+`https://getordo.dev/ai-context.tar.gz` always serves the newest release. Running
+an up-to-date Ordo and re-fetching after each upgrade is the recommended path —
+it is the only combination where every part of the context matches your install.
+
+Each bundle names the release it was generated for, in a comment at the top of
+`AGENTS.md`, so you can tell which one a project is carrying.
+
+### Pinning to an older Ordo
+
+If you cannot upgrade, fetch the bundle for the version you have:
+
+```sh
+ordo --version   # e.g. ordo 0.0.13
+curl -fsSL https://dl.getordo.dev/v0.0.13/ordo-ai-context-v0.0.13.tar.gz | tar xz
+```
+
+:::caution
+Pinning only matches the **written guidance**. The bundle links out to the schema
+and [CLI reference](/reference/) rather than copying them, and those pages are
+published for the **latest** release only — so a pinned bundle still points at a
+reference that may document commands and fields your Ordo does not have. The
+bundle states this too.
+:::
