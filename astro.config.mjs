@@ -103,6 +103,7 @@ export default defineConfig({
 						...openAPISidebarGroups,
 					],
 				},
+				{ label: 'Changelog', slug: 'changelog' },
 				{ label: 'Architecture', slug: 'architecture' },
 			],
 		}),
